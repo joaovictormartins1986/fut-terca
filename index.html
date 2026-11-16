@@ -384,15 +384,16 @@ function loginView(msg){
   $('#nav').innerHTML = '';
   $('#view').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto">
     <h2>Entrar</h2>
-    <p class="sm mu" style="margin-bottom:12px">Digite seu e-mail. Vamos enviar um código de 6 dígitos para você entrar.</p>
+    <p class="sm mu" style="margin-bottom:12px">Digite seu e-mail. Vamos enviar um link de acesso — abra o e-mail <b>neste aparelho</b> e toque em “Sign in”.</p>
     ${msg ? `<div class="banner">${esc(msg)}</div>` : ''}
     ${ui.loginEmail ? `
-      <p class="sm" style="margin-bottom:8px">Código enviado para <b>${esc(ui.loginEmail)}</b>.</p>
-      <input id="lgCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de 6 dígitos" maxlength="8" style="font-size:22px;letter-spacing:4px;text-align:center">
-      <button class="btn pri blk" style="margin-top:10px" data-a="lgVerify">Entrar</button>
+      <p class="sm" style="margin-bottom:8px">Link enviado para <b>${esc(ui.loginEmail)}</b>. Abra o e-mail neste aparelho e toque em “Sign in”. (Confira o spam.)</p>
+      <p class="sm mu" style="margin:10px 0 6px">Se o e-mail trouxer um código, digite aqui:</p>
+      <input id="lgCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Código" maxlength="8" style="font-size:22px;letter-spacing:4px;text-align:center">
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgVerify">Entrar com código</button>
       <button class="btn blk" style="margin-top:8px" data-a="lgBack">Usar outro e-mail</button>`
     : `<input id="lgEmail" type="email" autocomplete="email" placeholder="seu@email.com">
-      <button class="btn pri blk" style="margin-top:10px" data-a="lgSend">Enviar código</button>`}
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgSend">Enviar link de acesso</button>`}
   </div>`;
   setSync('loc','desconectado');
 }
@@ -408,9 +409,11 @@ async function init(){
   if (!window.supabase){ ui.mode = 'local'; lsLoad(); ui.loaded = true; setSync('err','offline'); render(); return; }
   sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   const { data } = await sb.auth.getSession();
+  if (location.hash && /access_token|error/.test(location.hash)) history.replaceState(null, '', location.pathname);
+  let started = false;
+  sb.auth.onAuthStateChange((ev, ses) => { if (ev === 'SIGNED_OUT') { started = false; loginView(); } else if (ev === 'SIGNED_IN' && ses && !started) { started = true; ui.loginEmail = null; startData(); } });
   if (!data.session){ loginView(); return; }
-  startData();
-  sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') loginView(); });
+  if (!started){ started = true; startData(); }
 }
 window.addEventListener('online', () => { if (db) loadAll().then(() => { setSync('ok','sincronizado'); softRender(); }).catch(()=>{}); });
 
@@ -1122,7 +1125,7 @@ function vCad(){
 /* ================= ações ================= */
 const A = {
   lgSend: async () => { const em = ($('#lgEmail').value || '').trim(); if (!em) return;
-    const { error } = await sb.auth.signInWithOtp({ email: em, options: { shouldCreateUser: true } });
+    const { error } = await sb.auth.signInWithOtp({ email: em, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
     if (error){ loginView(/not allowed|signups|not found|Signups/i.test(error.message) ? 'Esse e-mail não tem acesso ao app.' : 'Não foi possível enviar: ' + error.message); return; }
     ui.loginEmail = em; loginView(); setTimeout(() => $('#lgCode')?.focus(), 50); },
   lgVerify: async () => { const tk = ($('#lgCode').value || '').trim();
