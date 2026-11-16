@@ -384,16 +384,15 @@ function loginView(msg){
   $('#nav').innerHTML = '';
   $('#view').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto">
     <h2>Entrar</h2>
-    <p class="sm mu" style="margin-bottom:12px">Digite seu e-mail. Vamos enviar um link de acesso — abra o e-mail <b>neste aparelho</b> e toque em “Sign in”.</p>
+    <p class="sm mu" style="margin-bottom:12px">Digite seu e-mail. Vamos enviar um código de acesso para você digitar aqui.</p>
     ${msg ? `<div class="banner">${esc(msg)}</div>` : ''}
     ${ui.loginEmail ? `
-      <p class="sm" style="margin-bottom:8px">Link enviado para <b>${esc(ui.loginEmail)}</b>. Abra o e-mail neste aparelho e toque em “Sign in”. (Confira o spam.)</p>
-      <p class="sm mu" style="margin:10px 0 6px">Se o e-mail trouxer um código, digite aqui:</p>
-      <input id="lgCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Código" maxlength="8" style="font-size:22px;letter-spacing:4px;text-align:center">
-      <button class="btn pri blk" style="margin-top:10px" data-a="lgVerify">Entrar com código</button>
+      <p class="sm" style="margin-bottom:8px">Código enviado para <b>${esc(ui.loginEmail)}</b>. Confira também o spam.</p>
+      <input id="lgCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Código" maxlength="10" style="font-size:22px;letter-spacing:4px;text-align:center">
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgVerify">Entrar</button>
       <button class="btn blk" style="margin-top:8px" data-a="lgBack">Usar outro e-mail</button>`
     : `<input id="lgEmail" type="email" autocomplete="email" placeholder="seu@email.com">
-      <button class="btn pri blk" style="margin-top:10px" data-a="lgSend">Enviar link de acesso</button>`}
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgSend">Enviar código</button>`}
   </div>`;
   setSync('loc','desconectado');
 }
