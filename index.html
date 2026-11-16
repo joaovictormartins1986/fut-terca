@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fut Terça</title>
+<meta name="theme-color" content="#0b1310">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fut Terça">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1310;--s1:#121d18;--s2:#1a2822;--s3:#24362e;--line:#2b3f36;
+  --tx:#e9f2ed;--mu:#8fa69b;--ac:#3ddc97;--ac2:#1f8f5f;--warn:#f5b041;--bad:#ef5350;
+  --p1:#3ddc97;--p2:#7bd3f7;--p3:#c7b8ff;--p4:#f5b041;--p5:#ef8a6a;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--tx);font:15px/1.4 Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+body{padding-bottom:84px;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);outline-offset:-1px}
+.num,.cond{font-family:"Barlow Condensed",Inter,sans-serif}
+header{position:sticky;top:0;z-index:20;background:rgba(11,19,16,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+header h1{font-family:"Barlow Condensed";font-weight:800;font-size:24px;letter-spacing:.5px;text-transform:uppercase}
+header h1 b{color:var(--ac)}
+header .date{margin-left:auto;display:flex;align-items:center;gap:6px}
+header .date input{width:auto;padding:6px 8px;font-size:14px}
+.sync{font-size:11px;color:var(--mu);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--mu);display:inline-block}
+.sync.ok i{background:var(--ac)}.sync.loc i{background:var(--warn)}.sync.err i{background:var(--bad)}
+main{max-width:980px;margin:0 auto;padding:14px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--s1);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;max-width:150px;padding:9px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--mu);font-size:11px;font-weight:600}
+nav button svg{width:22px;height:22px}
+nav button.on{color:var(--ac)}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.card h2{font-family:"Barlow Condensed";font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card h2 .sp{margin-left:auto}
+.mu{color:var(--mu)}.sm{font-size:12.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:10px;background:var(--s3);font-weight:600;font-size:14px;border:1px solid var(--line)}
+.btn.pri{background:var(--ac);color:#06281a;border-color:var(--ac)}
+.btn.bad{background:transparent;color:var(--bad);border-color:#5a2a2a}
+.btn.sm{padding:6px 10px;font-size:12.5px}
+.btn.blk{width:100%}
+.btn:disabled{opacity:.4}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.stat{background:var(--s2);border-radius:10px;padding:10px 12px}
+.stat .l{font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.4px}
+.stat .v{font-family:"Barlow Condensed";font-size:26px;font-weight:700;line-height:1.1}
+.pos{color:var(--ac)}.neg{color:var(--bad)}
+.potbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.potbar span{font-size:12.5px;padding:4px 9px;border-radius:20px;background:var(--s2);border:1px solid var(--line)}
+.potbar span.w{border-color:var(--warn);color:var(--warn)}
+.plist{display:flex;flex-direction:column;gap:6px}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--s2);min-height:46px}
+.prow.off{background:transparent;border:1px dashed var(--line)}
+.prow.off .nm{opacity:.6}
+.prow .nm{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk{width:32px;height:32px;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;flex:none;color:transparent;font-weight:800}
+.prow:not(.off) .chk{background:var(--ac);border-color:var(--ac);color:#06281a}
+.pots{display:flex;gap:3px;flex:none}
+.pot{width:27px;height:30px;border-radius:7px;background:var(--s3);color:var(--mu);font-family:"Barlow Condensed";font-weight:700;font-size:16px}
+.pot.sel{color:#08140f}
+.pot.sel.p1{background:var(--p1)}.pot.sel.p2{background:var(--p2)}.pot.sel.p3{background:var(--p3)}.pot.sel.p4{background:var(--p4)}.pot.sel.p5{background:var(--p5)}
+.pay{flex:none;min-width:58px;padding:7px 8px;border-radius:8px;font-size:12.5px;font-weight:700;border:1px solid var(--warn);color:var(--warn)}
+.pay.ok{background:var(--ac2);border-color:var(--ac2);color:#dfffee}
+.pay.ok.bal{background:#6b4a12;border-color:#6b4a12;color:#ffe2a8}
+.pays{display:flex;gap:4px;flex:none}
+.fech{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14.5px;align-items:center}
+.fech .v{font-family:"Barlow Condensed";font-size:21px;font-weight:700;text-align:right}
+.fech .big{font-size:30px;color:var(--ac)}
+.fech hr{grid-column:1/-1;border:0;border-top:1px solid var(--line)}
+.pb{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;font-family:"Barlow Condensed";font-weight:700;font-size:13px;color:#08140f;flex:none}
+.pb.p1{background:var(--p1)}.pb.p2{background:var(--p2)}.pb.p3{background:var(--p3)}.pb.p4{background:var(--p4)}.pb.p5{background:var(--p5)}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.team{border-radius:12px;overflow:hidden;background:var(--s2);border:1px solid var(--line)}
+.team .th{padding:8px 10px;display:flex;align-items:center;gap:8px;font-family:"Barlow Condensed";font-weight:800;font-size:19px;text-transform:uppercase}
+.team .th small{margin-left:auto;font-family:Inter;font-size:11.5px;font-weight:600;opacity:.85;text-transform:none}
+.team ul{list-style:none;padding:6px}
+.team li button{width:100%;display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:8px;text-align:left}
+.team li button.sel{background:var(--s3);outline:2px solid var(--ac)}
+.sect{font-family:"Barlow Condensed";font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--line);grid-column:1/-1}
+.sect .mu{font-family:Inter;font-size:12px;text-transform:none;letter-spacing:0;font-weight:500}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+.seg button{padding:9px;border-radius:8px;font-weight:600;font-size:14px;color:var(--mu)}
+.seg button.on{background:var(--ac);color:#06281a}
+.potsro{display:flex;gap:3px;margin-left:auto;flex:none}
+.potsro span{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-family:"Barlow Condensed";font-weight:700;font-size:13px}
+.potsro .po{color:var(--mu);opacity:.35;background:var(--s3)}
+.potsect{display:flex;align-items:center;gap:8px}
+.wtxt{color:var(--warn)!important}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .wd{font-size:11px;color:var(--mu);font-weight:700;padding:2px 0}
+.cal .wd.t{color:var(--ac)}
+.cal button{position:relative;padding:8px 0;border-radius:8px;font-size:14px;color:var(--mu)}
+.cal button.ter{color:var(--tx);font-weight:700;background:var(--s2);border:1px solid var(--ac2)}
+.cal button.sel{background:var(--ac);color:#06281a;border-color:var(--ac)}
+.cal button.hoje{text-decoration:underline}
+.cal button .dt{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--ac)}
+.cal button.sel .dt{background:#06281a}
+.cal button .dt.pend{background:var(--warn)}
+.calh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.calh b{flex:1;text-align:center;font-family:"Barlow Condensed";font-size:18px;text-transform:capitalize}
+.prow[hidden],.sect[hidden],.plist[hidden]{display:none!important}
+.filtro{position:sticky;top:58px;z-index:5;background:var(--s1);padding:4px 0 8px}
+.filtro input{font-size:16px}
+.mtag{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 4px;border-radius:5px;background:#2b3c6b;color:#b9cbff;font-size:11px;font-weight:800;vertical-align:1px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:6px 10px;border-radius:20px;background:var(--s3);font-size:13px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.chip.sel{outline:2px solid var(--ac)}
+/* jogo */
+.board{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch}
+.side{border-radius:16px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+.side .tn{font-family:"Barlow Condensed";font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.5px}
+.side .gl{font-family:"Barlow Condensed";font-weight:800;font-size:84px;line-height:.9}
+.side .gb{display:flex;gap:8px}
+.side .gb button{width:52px;height:44px;border-radius:12px;background:rgba(0,0,0,.25);font-size:24px;font-weight:800}
+.side .gb button.plus{width:72px;background:rgba(0,0,0,.4)}
+.side .roster{width:100%;display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.slot{width:100%;display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:9px;background:rgba(0,0,0,.14);text-align:left;font-weight:600;font-size:14px;min-height:38px;color:inherit}
+.slot .pb{box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.slot.vaga{background:transparent;border:2px dashed currentColor;opacity:.85;font-weight:700}
+.slot.sub{background:rgba(255,255,255,.28)}
+.slot small{font-weight:500;opacity:.75;font-size:11.5px;display:block}
+.slot.aus{opacity:.55;text-decoration:line-through}
+.qlist{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.qlist .slot{background:var(--s3);color:var(--tx)}
+.qlist .slot.aus{background:transparent;border:1px dashed var(--line)}
+.cand{display:flex;flex-direction:column;gap:6px}
+.cand button{display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;background:var(--s2);text-align:left;font-weight:600}
+.evb{font-size:12px;margin-left:2px}
+.abox{display:inline-grid;place-items:center;width:1.25em;height:1.25em;border:1.5px solid currentColor;border-radius:3px;font-family:Inter,sans-serif;font-weight:800;font-size:.8em;line-height:1;vertical-align:-.12em;margin-right:2px}
+.evlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.hist div{flex-wrap:wrap}
+.cand button small{margin-left:auto;color:var(--mu);font-weight:500}
+.mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:150px}
+.clock{font-family:"Barlow Condensed";font-weight:800;font-size:76px;line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.clock.warn{color:var(--warn)}.clock.end{color:var(--bad);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.ctrl{display:flex;gap:8px}
+.ctrl .btn{padding:12px 16px;font-size:16px}
+.result{display:contents}
+.resdone{grid-column:1/-1;border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.resdone .rt{font-family:"Barlow Condensed";font-weight:800;font-size:30px;text-transform:uppercase;letter-spacing:.5px}
+.resdone .rt .num{margin-left:8px;opacity:.75}
+.resdone .btn{background:rgba(0,0,0,.25);border:0;color:inherit}
+.resdone .btn.pri{background:#0b1310;color:var(--ac);padding:12px 16px}
+.result .btn{width:100%}
+.result .btn{padding:14px 8px;font-size:15px}
+.result .btn.sug{outline:3px solid #fff;outline-offset:2px}
+.queue{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qcard{border-radius:12px;padding:10px 12px;background:var(--s2);border-left:8px solid}
+.qcard .ql{font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.qcard .qn{font-family:"Barlow Condensed";font-size:22px;font-weight:800;text-transform:uppercase}
+.qcard .qp{font-size:12.5px;color:var(--mu)}
+.hist{display:flex;flex-direction:column;gap:4px}
+.hist div{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--s2);border-radius:8px;font-size:14px}
+.dot{width:12px;height:12px;border-radius:4px;display:inline-block;flex:none}
+.flash{position:fixed;inset:0;background:var(--bad);opacity:0;pointer-events:none;z-index:50}
+.flash.go{animation:fl 2.4s ease-out}
+@keyframes fl{0%,20%,40%{opacity:.55}10%,30%{opacity:0}100%{opacity:0}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:11.5px;color:var(--mu);text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+td.r,th.r{text-align:right}
+.tbl{overflow-x:auto}
+.debt{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.debt .top{display:flex;align-items:center;gap:8px;font-weight:600}
+.debt .top .v{margin-left:auto;color:var(--warn);font-family:"Barlow Condensed";font-size:20px}
+.debt .days{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--mu)}
+.empty{text-align:center;padding:30px 10px;color:var(--mu)}
+.banner{background:#3a2c10;border:1px solid #6b5016;color:#ffd99a;padding:10px 12px;border-radius:10px;font-size:13px;margin-bottom:14px}
+#modal{position:fixed;inset:0;z-index:60;display:none}
+#modal.open{display:block}
+.mbg{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.mbox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,92vw);max-height:86vh;overflow:auto;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.mbox h3{font-family:"Barlow Condensed";font-size:22px;text-transform:uppercase}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:9px 16px;border-radius:20px;font-weight:600;font-size:14px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+.loading{display:grid;place-items:center;min-height:50vh;color:var(--mu)}
+@media (min-width:760px){
+  .side .gb button{width:64px;height:56px;font-size:28px}
+  .side .gb button.plus{width:96px}
+  .ctrl .btn{padding:14px 22px;font-size:18px}
+  .result .btn{padding:18px 8px;font-size:17px}
+  .slot{min-height:44px;font-size:15px}
+  .clock{font-size:clamp(76px,11vw,120px)}
+  .side .gl{font-size:clamp(84px,10vw,120px)}
+  .side .tn{font-size:28px}
+}
+@media (min-width:1000px) and (orientation:landscape){
+  main.wide{max-width:1500px}
+  .jgrid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(300px,1fr);gap:14px;align-items:start}
+  .jside .queue{grid-template-columns:1fr}
+  .jside .card h2{flex-wrap:wrap}
+  .jside .qlist .slot{min-height:36px;padding:5px 8px}
+  .jside .qcard .qn{font-size:20px}
+  .clock{font-size:clamp(90px,9vw,150px)}
+  .mid{min-width:200px}
+}
+@media (min-width:1000px) and (orientation:landscape) and (max-height:900px){
+  .jmain .card{padding:12px}
+  .jmain .card h2{margin-bottom:6px}
+  .side{padding:10px;gap:4px}
+  .side .gl{font-size:96px}
+  .side .tn{font-size:26px}
+  .side .roster .slot{min-height:38px;padding:5px 8px}
+  .result .btn{padding:15px 8px}
+  .rulehint{display:none}
+}
+@media (min-width:1100px){ .plist{display:grid;grid-template-columns:1fr 1fr} }
+@media (max-width:620px){
+  .board{grid-template-columns:1fr 1fr}
+  .mid{grid-column:1/-1;order:-1;flex-direction:row;flex-wrap:wrap}
+  .result .btn[data-r="e"]{grid-column:1/-1;order:1}
+  .clock{font-size:84px;width:100%;text-align:center}
+  .side .gl{font-size:72px}
+  header h1{font-size:20px}
+  .sync span{display:none}
+  .prow{flex-wrap:wrap;row-gap:6px}
+  .prow .nm{flex:1 1 calc(100% - 44px)}
+  .prow .pots{margin-left:0}
+  .prow .pay{min-width:52px;padding:7px 6px}
+  .prow .pays{margin-left:auto}
+  .prow.inl{flex-wrap:nowrap}
+  .prow.inl .nm{flex:1 1 auto}
+}
+/* celular deitado: tudo do jogo cabe numa tela */
+@media (orientation:landscape) and (max-height:520px){
+  header{padding:5px 12px} header h1{font-size:18px} header .date input{padding:3px 6px;font-size:13px}
+  body{padding-bottom:44px}
+  nav button{flex-direction:row;justify-content:center;gap:6px;padding:7px 4px;font-size:12px}
+  nav button svg{width:18px;height:18px}
+  main{padding:8px}
+  .card{padding:10px;margin-bottom:10px}
+  .jmain .card>h2{display:none}
+  .side{padding:6px 8px;gap:3px;border-radius:12px}
+  .side .tn{font-size:19px}
+  .side .tn + .sm{display:none}
+  .side .gl{font-size:54px}
+  .side .gb button{width:44px;height:38px;font-size:22px}
+  .side .gb button.plus{width:64px}
+  .side .roster{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:3px;margin-top:2px}
+  .side .roster .slot{width:auto;min-height:0;padding:3px 6px;font-size:12px;gap:4px}
+  .side .roster .slot small{display:inline;margin-left:3px}
+  .side .roster .slot .pb{width:15px;height:15px;font-size:10px}
+  .mid{min-width:130px;gap:6px}
+  .clock{font-size:66px}
+  .ctrl .btn{padding:8px 12px;font-size:14px}
+  .result .btn{padding:10px 6px;font-size:14px}
+  .rulehint{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Fut <b>Terça</b></h1>
+  <div class="sync" id="sync"><i></i><span>conectando…</span></div>
+  <div class="date"><input type="date" id="dateIn" aria-label="Data do jogo"></div>
+</header>
+<main id="view"><div class="loading">Carregando…</div></main>
+<nav id="nav"></nav>
+<div id="modal"></div>
+<div id="toast"></div>
+<div class="flash" id="flash"></div>
+
+<script>
+/* ================= base ================= */
+const $ = s => document.querySelector(s);
+const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const matchNm = (nome, q) => { q = norm(q); if (!q) return true; const n = norm(nome); return n.startsWith(q) || n.split(/[\s()]+/).some(w => w.startsWith(q)); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const brl = v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const DOW = ['dom','seg','ter','qua','qui','sex','sáb'];
+const MES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const fdate = s => { const d = parseD(s); return `${DOW[d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)}`; };
+const fmonth = s => { const [y,m] = s.split('-').map(Number); return `${MES[m-1]} de ${y}`; };
+const uid = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function defaultDate(){
+  const t = new Date(); const dw = t.getDay();
+  if (dw === 2) return ymd(t);
+  if (dw === 3 || dw === 4) { t.setDate(t.getDate() - (dw - 2)); return ymd(t); } // qua/qui: terça que passou
+  t.setDate(t.getDate() + ((2 - dw + 7) % 7)); return ymd(t);                       // próxima terça
+}
+
+// coletes: lado esquerdo do painel = amarelo, lado direito = azul
+const COLETE = [ {n:'Amarelo', c:'#facc15', t:'#1d1a05'}, {n:'Azul', c:'#3b82f6', t:'#ffffff'} ];
+const TEAMC = '#2c4339';
+const DEF = { valorHora:180, horas:2, valorJogador:25, valorMensal:100, minutos:8, gols:3 };
+
+/* ================= estado ================= */
+const S = { config:{...DEF}, players:{}, days:{}, ledger:{}, meses:{} };
+const ui = {
+  tab: ['dia','sorteio','jogo','caixa','relatorios','cadastro'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'dia',
+  date: defaultDate(), sel: null, mes: ymd(new Date()).slice(0,7), loaded: false, mode: 'wait', soloPres: false
+};
+const tname = i => `Time ${i+1}`;
+const pname = id => S.players[id]?.nome || '(removido)';
+const potOf = (day, id) => (day?.potes && day.potes[id]) || S.players[id]?.pote || 3;
+
+/* ================= persistência (Supabase) ================= */
+const SUPA_URL = 'https://nxgkohbvzijspdznvsbh.supabase.co', SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54Z2tvaGJ2emlqc3Bkem52c2JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4Mzg0MDQsImV4cCI6MjExMDQxNDQwNH0.V_Ybp7Nk6nTtIT_cFZR76B_CXckWMG9RBEQfJXQ5oMA';
+let sb = null, db = null, rtChan = null;
+const pend = {}, chain = {};
+const COLS = { players:'players', days:'days', ledger:'ledger', meses:'meses' };
+function lsSave(){ try{ localStorage.setItem('futterca_cache', JSON.stringify(S)); }catch(e){} }
+function lsLoad(){ try{ const d = JSON.parse(localStorage.getItem('futterca_cache')||'null'); if(d){ S.players=d.players||{}; S.days=d.days||{}; S.ledger=d.ledger||{}; S.meses=d.meses||{}; S.config={...DEF,...(d.config||{})}; } }catch(e){} }
+
+function save(path, data){            // data === null → apaga
+  lsSave();
+  if (!db) return;
+  if (pend[path]) clearTimeout(pend[path].t);
+  pend[path] = { data: data === null ? null : clone(data), t: setTimeout(() => flush(path), 400) };
+}
+function flushAll(){ Object.keys(pend).forEach(p => { clearTimeout(pend[p].t); flush(p); }); }
+function flush(path){
+  const p = pend[path]; if (!p) return;
+  chain[path] = (chain[path] || Promise.resolve()).then(async () => {
+    const run = async () => {
+      const r = p.data === null
+        ? await sb.from('docs').delete().eq('path', path)
+        : await sb.from('docs').upsert({ path, col: path.split('/')[0], data: p.data, updated_at: new Date().toISOString() });
+      if (r.error) throw r.error;
+    };
+    try { await run(); setSync('ok','sincronizado'); }
+    catch(e){ await sleep(800 + Math.random()*900); try{ await run(); setSync('ok','sincronizado'); }catch(e2){ writeFail(e2); } }
+    finally { if (pend[path] === p) delete pend[path]; }
+  });
+}
+function writeFail(e){
+  setSync('err', 'erro ao salvar');
+  console.error(e);
+  toast(e && /row-level|permission|JWT/i.test(e.message||'') ? 'Sem permissão para salvar — faça login de novo' : 'Falha ao salvar — verifique a internet');
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushAll(); });
+window.addEventListener('pagehide', flushAll);
+
+function setSync(cls, txt){ const el = $('#sync'); el.className = 'sync ' + cls; el.querySelector('span').textContent = txt; }
+
+function applyDoc(path, data){
+  if (pend[path]) return;                 // edição local ainda não enviada vence
+  const [col, id] = path.split('/');
+  if (col === 'fut'){ if (id === 'config') S.config = {...DEF, ...(data || {})}; return; }
+  if (!COLS[col]) return;
+  if (data === null) delete S[col][id]; else S[col][id] = data;
+}
+async function loadAll(){
+  const { data, error } = await sb.from('docs').select('path,data');
+  if (error) throw error;
+  S.players = {}; S.days = {}; S.ledger = {}; S.meses = {}; S.config = {...DEF};
+  for (const r of data) applyDoc(r.path, r.data);
+  lsSave();
+}
+function subscribe(){
+  if (rtChan) sb.removeChannel(rtChan);
+  rtChan = sb.channel('docs-rt').on('postgres_changes', { event:'*', schema:'public', table:'docs' }, ev => {
+    if (ev.eventType === 'DELETE') applyDoc(ev.old.path, null); else applyDoc(ev.new.path, ev.new.data);
+    lsSave(); softRender();
+  }).subscribe(st => { if (st === 'SUBSCRIBED') setSync('ok','sincronizado'); else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') setSync('err','reconectando…'); });
+}
+/* ---- login por código no e-mail ---- */
+function loginView(msg){
+  ui.loaded = false;
+  $('#nav').innerHTML = '';
+  $('#view').innerHTML = `<div class="card" style="max-width:420px;margin:40px auto">
+    <h2>Entrar</h2>
+    <p class="sm mu" style="margin-bottom:12px">Digite seu e-mail. Vamos enviar um código de 6 dígitos para você entrar.</p>
+    ${msg ? `<div class="banner">${esc(msg)}</div>` : ''}
+    ${ui.loginEmail ? `
+      <p class="sm" style="margin-bottom:8px">Código enviado para <b>${esc(ui.loginEmail)}</b>.</p>
+      <input id="lgCode" inputmode="numeric" autocomplete="one-time-code" placeholder="Código de 6 dígitos" maxlength="8" style="font-size:22px;letter-spacing:4px;text-align:center">
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgVerify">Entrar</button>
+      <button class="btn blk" style="margin-top:8px" data-a="lgBack">Usar outro e-mail</button>`
+    : `<input id="lgEmail" type="email" autocomplete="email" placeholder="seu@email.com">
+      <button class="btn pri blk" style="margin-top:10px" data-a="lgSend">Enviar código</button>`}
+  </div>`;
+  setSync('loc','desconectado');
+}
+async function startData(){
+  const ac = await sb.rpc('tem_acesso');
+  if (ac.error || ac.data !== true){ await sb.auth.signOut(); ui.loginEmail = null; loginView(ac.error ? 'Não foi possível verificar o acesso. Tente de novo.' : 'Esse e-mail não tem acesso ao app. Peça ao administrador.'); return; }
+  db = true; ui.mode = 'db'; setSync('loc','carregando…');
+  lsLoad(); ui.loaded = Object.keys(S.players).length > 0; if (ui.loaded) render();
+  try { await loadAll(); ui.loaded = true; setSync('ok','sincronizado'); render(); subscribe(); }
+  catch(e){ console.error(e); ui.loaded = true; setSync('err', 'sem conexão'); render(); if (/JWT|auth/i.test(e.message||'')) { await sb.auth.signOut(); loginView('Sua sessão expirou. Entre de novo.'); } }
+}
+async function init(){
+  if (!window.supabase){ ui.mode = 'local'; lsLoad(); ui.loaded = true; setSync('err','offline'); render(); return; }
+  sb = window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+  const { data } = await sb.auth.getSession();
+  if (!data.session){ loginView(); return; }
+  startData();
+  sb.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') loginView(); });
+}
+window.addEventListener('online', () => { if (db) loadAll().then(() => { setSync('ok','sincronizado'); softRender(); }).catch(()=>{}); });
+
+/* ================= helpers de dados ================= */
+function getDay(date, create){
+  if (!S.days[date] && create){
+    S.days[date] = { data:date, presentes:[], potes:{}, pag:{}, times:null, fila:[0,1,2,3], jogos:[],
+      valor:Number(S.config.valorJogador)||0, custo:(Number(S.config.valorHora)||0)*(Number(S.config.horas)||0) };
+  }
+  return S.days[date];
+}
+const saveDay = date => save('days/' + date, S.days[date]);
+const savePlayer = id => save('players/' + id, S.players[id] || null);
+const playedDays = () => Object.values(S.days).filter(d => (d.presentes && d.presentes.length) || (d.dev && Object.keys(d.dev).length)).sort((a,b) => a.data < b.data ? -1 : 1);
+const paidOf = (d, id) => Number((d.pag || {})[id]) || 0;
+// valor devido: por pessoa (mensalidade, goleiro, histórico) ou o valor do dia
+const isGol = id => !!S.players[id]?.goleiro;
+// Art. 28: goleiro não paga
+// mensalidade: o mês define quem é mensalista e quais terças a mensalidade cobre
+const mesDe = date => S.meses[(date || '').slice(0,7)];
+const cobertoMensal = (date, id) => { const M = mesDe(date); return !!(M && (M.mens||[]).includes(id) && (M.datas||[]).includes(date)); };
+const isMensal = (date, id) => { const M = mesDe(date); return M ? (M.mens||[]).includes(id) : !!S.players[id]?.mensalista; };
+const dueOf = (d, id) => (d.dev && id in d.dev) ? (Number(d.dev[id]) || 0) : isGol(id) ? 0 : cobertoMensal(d.data, id) ? 0 : (d.presentes || []).includes(id) ? (Number(d.valor) || 0) : 0;
+const partsOf = d => [...new Set([...(d.presentes || []), ...Object.keys(d.dev || {}), ...Object.keys(d.pag || {})])];
+const isPaid = (d, id) => paidOf(d,id) >= dueOf(d,id) - 0.009;
+const formaOf = (d, id) => ((d.forma || {})[id]) || 'pix';
+function fechamento(d){
+  let pix = 0, balcao = 0;
+  for (const id of partsOf(d)){ const v = paidOf(d,id); if (formaOf(d,id) === 'balcao') balcao += v; else pix += v; }
+  const custo = Number(d.custo) || 0;
+  const pixDono = Math.max(0, custo - balcao), excesso = Math.max(0, balcao - custo);
+  return { pix, balcao, custo, pixDono, excesso };
+}
+// pendências: só dias que já passaram (o dia de hoje ainda está sendo cobrado)
+function balances(){
+  const b = {}, hoje = ymd(new Date());
+  for (const d of playedDays().filter(x => x.data < hoje)) for (const id of partsOf(d)){
+    const x = b[id] ||= {net:0, days:[]};
+    const diff = dueOf(d,id) - paidOf(d,id); x.net += diff;
+    if (diff > 0.009) x.days.push({date:d.data, due:diff});
+  }
+  for (const [mid, M] of Object.entries(S.meses)){
+    if (!(M.datas||[]).length || [...M.datas].sort()[0] >= hoje) continue;   // vira pendência depois da 1ª terça do mês
+    for (const id of M.mens||[]){
+      const x = b[id] ||= {net:0, days:[]};
+      const diff = (Number(M.valor)||0) - (Number((M.pag||{})[id])||0); x.net += diff;
+      if (diff > 0.009) x.days.push({date:mid, due:diff, mes:true});
+    }
+  }
+  return b;
+}
+// pendências já descontando crédito de quem pagou a mais
+function debts(){
+  const m = {};
+  for (const [id,x] of Object.entries(balances())) if (x.net > 0.009) m[id] = { total:x.net, days:x.days, credito: x.days.reduce((s,o)=>s+o.due,0) - x.net };
+  return m;
+}
+function credits(){ return Object.entries(balances()).filter(([,x]) => x.net < -0.009).map(([id,x]) => [id, -x.net]); }
+function faltando(){
+  const ds = Object.keys(S.days).sort(); const ini = ds.length ? ds[0] : null; if (!ini) return [];
+  const out = [], hoje = ymd(new Date()); const t = parseD(ini); while (t.getDay() !== 2) t.setDate(t.getDate() + 1);
+  for (; ymd(t) < hoje; t.setDate(t.getDate() + 7)){ const k = ymd(t), d = S.days[k];
+    if (!d || (!(d.presentes||[]).length && !d.semJogo && !Object.keys(d.dev||{}).length)) out.push(k); }
+  return out;
+}
+function caixa(){
+  let arrec = 0, quadra = 0, ent = 0, sai = 0;
+  for (const d of playedDays()){ quadra += Number(d.custo)||0; for (const id of partsOf(d)) arrec += paidOf(d,id); }
+  for (const M of Object.values(S.meses)) for (const v of Object.values(M.pag||{})) arrec += Number(v)||0;
+  for (const l of Object.values(S.ledger)){ if (l.tipo === 'entrada') ent += Number(l.valor)||0; else sai += Number(l.valor)||0; }
+  return { arrec, quadra, ent, sai, saldo: arrec - quadra + ent - sai };
+}
+function goalStats(days){
+  const g = {}, a = {};
+  for (const d of days) for (const j of (d.jogos||[])) for (const e of (j.ev||[])){
+    if (e.g && e.g !== 'contra') g[e.g] = (g[e.g]||0) + 1;
+    if (e.a) a[e.a] = (a[e.a]||0) + 1;
+  }
+  return { g, a };
+}
+function winsByPlayer(days){
+  const w = {};
+  for (const d of days) for (const j of (d.jogos||[])){
+    if (j.r === 'e' || !d.times) continue;
+    const t = j.r === 'a' ? j.a : j.b;
+    (j.esc ? j.esc[j.r === 'a' ? 0 : 1] : d.times[t] || []).forEach(id => w[id] = (w[id]||0) + 1);
+  }
+  return w;
+}
+
+/* ================= UI util ================= */
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+function modal(html){ const m = $('#modal'); m.innerHTML = `<div class="mbg" data-a="mclose"></div><div class="mbox">${html}</div>`; m.classList.add('open'); }
+function closeModal(){ const m = $('#modal'); m.classList.remove('open'); m.innerHTML = ''; }
+let askRes = null;
+function ask(msg, ok = 'Confirmar', danger){
+  return new Promise(res => { askRes = res;
+    modal(`<p>${msg}</p><div class="btns" style="justify-content:flex-end"><button class="btn" data-a="askno">Cancelar</button><button class="btn ${danger?'bad':'pri'}" data-a="askyes">${ok}</button></div>`); });
+}
+async function copyText(txt){
+  try { await navigator.clipboard.writeText(txt); toast('Copiado! Cole no WhatsApp'); }
+  catch(e){ modal(`<h3>Copiar texto</h3><p class="sm mu">Selecione tudo e copie:</p><textarea rows="12" readonly>${esc(txt)}</textarea><button class="btn" data-a="mclose">Fechar</button>`); }
+}
+
+/* ================= áudio / cronômetro ================= */
+let ac = null, wake = null;
+function audio(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch(e){} return ac; }
+function tone(f, t0, d, vol = .5, type = 'square'){
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), n = a.currentTime;
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, n+t0); g.gain.exponentialRampToValueAtTime(vol, n+t0+.01);
+  g.gain.setValueAtTime(vol, n+t0+d-.04); g.gain.exponentialRampToValueAtTime(0.0001, n+t0+d);
+  o.connect(g).connect(a.destination); o.start(n+t0); o.stop(n+t0+d+.03);
+}
+function whistle(){
+  for (let i=0;i<3;i++){ tone(2300, i*.75, .55, .55, 'square'); tone(2750, i*.75, .55, .25, 'sawtooth'); }
+  try { navigator.vibrate && navigator.vibrate([600,200,600,200,900]); } catch(e){}
+  const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+}
+const shortBeep = () => { tone(1500, 0, .18, .4); tone(1500, .28, .18, .4); };
+async function keepAwake(on){
+  try { if (on && 'wakeLock' in navigator && !wake){ wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); }
+        if (!on && wake){ await wake.release(); wake = null; } } catch(e){}
+}
+const LIVE0 = () => ({ date:null, run:false, start:0, acc:0, g:[0,0], ev:[], done:false, warned:false, why:'' });
+let live = (() => { try { return {...LIVE0(), ...JSON.parse(localStorage.getItem('futterca_live')||'{}')}; } catch(e){ return LIVE0(); } })();
+const saveLive = () => { try { localStorage.setItem('futterca_live', JSON.stringify(live)); } catch(e){} };
+const dur = () => (Number(S.config.minutos)||8) * 60000;
+const elapsed = () => live.acc + (live.run ? Date.now() - live.start : 0);
+const remaining = () => Math.max(0, dur() - elapsed());
+const fclock = ms => { const s = Math.ceil(ms/1000); return `${Math.floor(s/60)}:${pad(s%60)}`; };
+function endGame(why){
+  if (live.run){ live.acc = elapsed(); live.run = false; }
+  live.done = true; live.why = why; saveLive(); whistle(); keepAwake(false);
+  if (ui.tab === 'jogo') render();
+}
+function tick(){
+  if (live.run){
+    const r = remaining();
+    if (!live.warned && r <= 60000 && dur() > 60000){ live.warned = true; saveLive(); shortBeep(); }
+    if (r <= 0) endGame('tempo');
+  }
+  const c = document.getElementById('clock');
+  if (c){ const r = live.done ? 0 : remaining(); c.textContent = fclock(r);
+    c.className = 'clock' + (live.done ? ' end' : r <= 60000 ? ' warn' : ''); }
+}
+setInterval(tick, 250);
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ tick(); if (live.run) keepAwake(true); } });
+
+/* ================= render ================= */
+const ICONS = {
+  dia:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.7 2.5 3 5.2"/></svg>',
+  sorteio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>',
+  jogo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2h5M12 2v3"/></svg>',
+  caixa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><path d="M2.5 10h19M16 15h2.5"/></svg>',
+  relatorios:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  cadastro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
+};
+const TABS = [['dia','Lista'],['sorteio','Sorteio'],['jogo','Jogo'],['caixa','Caixa'],['relatorios','Relatórios'],['cadastro','Cadastro']];
+function renderNav(){ $('#nav').innerHTML = TABS.map(([k,l]) => `<button class="${ui.tab===k?'on':''}" data-a="tab" data-k="${k}">${ICONS[k]}${l}</button>`).join(''); }
+
+let softPending = false;
+function softRender(){
+  const ae = document.activeElement;
+  if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName) && $('#view').contains(ae)){
+    if (!softPending){ softPending = true; ae.addEventListener('blur', () => { softPending = false; setTimeout(render, 50); }, {once:true}); }
+    return;
+  }
+  render();
+}
+function render(){
+  renderNav();
+  $('#dateIn').value = ui.date;
+  if (!ui.loaded){ $('#view').innerHTML = '<div class="loading">Carregando…</div>'; return; }
+  const v = { dia:vDia, sorteio:vSorteio, jogo:vJogo, caixa:vCaixa, relatorios:vRel, cadastro:vCad }[ui.tab];
+  const banner = ui.mode === 'local' ? `<div class="banner">Sem conexão com o servidor. Verifique a internet.</div>` : '';
+  $('#view').className = ui.tab === 'jogo' ? 'wide' : '';
+  $('#view').innerHTML = banner + v();
+  if (ui.tab === 'dia' && ui.filtro) applyFiltro();
+  tick();
+}
+
+/* ---------- DIA ---------- */
+function vDia(){
+  const d = S.days[ui.date];
+  const pres = new Set(d?.presentes || []);
+  const all = Object.entries(S.players).filter(([id,p]) => p.ativo !== false || pres.has(id))
+    .sort((a,b) => a[1].nome.localeCompare(b[1].nome, 'pt-BR'));
+  if (!Object.keys(S.players).length) return `<div class="card empty"><p>Nenhum jogador cadastrado ainda.</p><br><button class="btn pri" data-a="tab" data-k="cadastro">Cadastrar jogadores</button></div>`;
+  const cnt = [0,0,0,0,0,0]; pres.forEach(id => { if (!isGol(id)) cnt[potOf(d,id)]++; });
+  const nGol = [...pres].filter(isGol).length;
+  const nP = pres.size, paid = [...pres].filter(id => isPaid(d,id)).length;
+  const fc = fechamento(d || {presentes:[], custo:S.config.valorHora*S.config.horas});
+  const allOn = all.length > 0 && all.every(([id]) => pres.has(id));
+  const list = all.filter(([id]) => !ui.soloPres || pres.has(id));
+  const row = ([id,p]) => {
+    const on = pres.has(id), pt = potOf(d,id);
+    return `<div class="prow inl ${on?'':'off'}" data-nm="${esc(norm(p.nome))}" ${ui.filtro && !matchNm(p.nome, ui.filtro) ? 'hidden' : ''}>
+      <button class="chk" data-a="pres" data-id="${id}" aria-label="Presença">✓</button>
+      <span class="nm">${esc(p.nome)}${isMensal(ui.date, id) ? ' <span class="mtag">M</span>' : ''}</span>
+      ${isGol(id) ? `<span class="chip" style="margin-left:auto">🧤 Goleiro</span>` : `<div class="potsro">${[1,2,3,4,5].map(n => `<span class="${n===pt ? 'pb p'+n : 'po'}">${n}</span>`).join('')}</div>`}
+    </div>`;
+  };
+  const rowsJ = list.filter(([id]) => !isGol(id)).map(row).join(''), rowsG = list.filter(([id]) => isGol(id)).map(row).join('');
+  return `
+  ${d && d.obs ? `<div class="banner"><b>A revisar:</b> ${esc(d.obs)}<div class="btns" style="margin-top:8px"><button class="btn sm" data-a="revisado">Marcar como revisado</button></div></div>` : ''}
+  ${d && d.semJogo ? `<div class="banner" style="background:var(--s2);border-color:var(--line);color:var(--tx)">Marcado como <b>sem jogo</b> neste dia. <button class="btn sm" data-a="semjogo">Desfazer</button></div>` : ''}
+  <div class="card">
+    <h2>${fdate(ui.date)} <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${nP} presentes${!nP && !(d && d.semJogo) && ui.date < ymd(new Date()) ? ' · <button class="btn sm" data-a="semjogo">Não teve jogo</button>' : ''}</span></h2>
+    <div class="stats">
+      <div class="stat"><div class="l">Jogadores</div><div class="v">${nP - nGol}<span class="mu" style="font-size:16px">/20</span></div></div>
+      <div class="stat"><div class="l">Goleiros</div><div class="v">${nGol}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Lista de presença <span class="sp btns"><button class="btn sm" data-a="allpres">${allOn ? 'Desmarcar todos' : 'Marcar todos'}</button><button class="btn sm" data-a="solo">${ui.soloPres ? 'Mostrar todos' : 'Só presentes'}</button></span></h2>
+    <div class="filtro"><input id="filtro" type="search" placeholder="🔍 Filtrar por nome…" value="${esc(ui.filtro||'')}" autocomplete="off"></div>
+    <div class="sect">Jogadores</div>
+    <div class="plist">${rowsJ || '<div class="empty">Ninguém marcado ainda</div>'}</div>
+    ${rowsG ? `<div class="sect">🧤 Goleiros</div><div class="plist">${rowsG}</div>` : ''}
+    <div style="display:flex;gap:8px;margin-top:10px"><input id="quickAdd" placeholder="Adicionar jogador (nome)"><select id="quickPot" style="width:118px">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===3?'selected':''}>Pote ${n}</option>`).join('')}<option value="G">🧤 Goleiro</option></select><button class="btn" data-a="quickadd">+</button></div>
+    <p class="sm mu" style="margin-top:8px">O pote mostrado é o do dia. Ajustes de pote e o sorteio ficam na aba <b>Sorteio</b>; pagamentos, na aba <b>Caixa</b>.</p>
+    ${nP - nGol >= 8 ? `<button class="btn pri blk" style="margin-top:10px" data-a="tab" data-k="sorteio">Ir para o sorteio →</button>` : ''}
+  </div>`;
+}
+/* ---------- SORTEIO ---------- */
+function vSorteio(){
+  const d = S.days[ui.date];
+  const linha = (d?.presentes || []).filter(id => !isGol(id) && S.players[id]);
+  const gols = (d?.presentes || []).filter(id => isGol(id));
+  if (!linha.length) return `<div class="card empty"><p>Marque os presentes na aba <b>Dia</b> primeiro.</p><br><button class="btn pri" data-a="tab" data-k="dia">Ir para o Dia</button></div>`;
+  const n = linha.length, cnt = [0,0,0,0,0,0]; linha.forEach(id => cnt[potOf(d,id)]++);
+  const mudou = id => d.potes && d.potes[id] && d.potes[id] !== S.players[id]?.pote;
+  const nMud = linha.filter(mudou).length;
+  const sorted = linha.slice().sort((x,y) => pname(x).localeCompare(pname(y),'pt-BR'));
+  return `
+  <div class="card">
+    <h2>Potes do dia <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${n} jogadores${gols.length ? ' · 🧤 ' + gols.length : ''}</span></h2>
+    <div class="potbar">${[1,2,3,4,5].map(p => `<span class="${n===20 && cnt[p]!==4 ? 'w':''}"><b class="pb p${p}" style="width:16px;height:16px;font-size:11px">${p}</b> ${cnt[p]}</span>`).join('')}<span class="mu">${n===20 ? 'ideal: 4 por pote' : 'com 20: 4 por pote'}</span></div>
+    <p class="sm mu" style="margin-bottom:10px">Ajuste o pote de quem veio hoje. <b>Vale só para este dia</b> — o pote do cadastro não muda.${nMud ? ` ${nMud} alterado${nMud>1?'s':''} hoje.` : ''}</p>
+    ${[1,2,3,4,5].map(pp => { const grp = sorted.filter(id => potOf(d,id) === pp);
+      return `<div class="sect potsect"><span class="pb p${pp}">${pp}</span> Pote ${pp} <span class="mu ${n===20 && grp.length!==4 ? 'wtxt' : ''}">· ${grp.length} jogador${grp.length===1?'':'es'}</span></div>
+      <div class="plist">${grp.map(id => `<div class="prow inl">
+        <span class="nm">${esc(pname(id))}${mudou(id) ? ` <small class="mu" style="font-weight:500">(cadastro: ${S.players[id].pote})</small>` : ''}</span>
+        <div class="pots">${[1,2,3,4,5].map(p => `<button class="pot p${p} ${p===potOf(d,id)?'sel':''}" data-a="pot" data-id="${id}" data-n="${p}">${p}</button>`).join('')}</div></div>`).join('') || '<div class="sm mu" style="padding:4px 2px">Ninguém neste pote</div>'}</div>`; }).join('')}
+    ${nMud ? '<button class="btn sm" style="margin-top:10px" data-a="resetpotes">Voltar todos ao pote do cadastro</button>' : ''}
+    ${gols.length ? `<div class="sm mu" style="margin-top:10px">🧤 Goleiros (fora do sorteio): ${gols.map(id => esc(pname(id))).join(', ')}</div>` : ''}
+  </div>
+  ${vTimes(d)}`;
+}
+function vFech(d, fc){
+  return `<div class="card">
+    <h2>Fechamento do dia ${d.donoPago ? '<span class="sp chip" style="background:var(--ac2)">✓ pix ao dono feito</span>' : ''}</h2>
+    <div class="fech">
+      <span>Custo da quadra</span><span class="v">${brl(fc.custo)}</span>
+      <span>Pago no balcão (abate)</span><span class="v">− ${brl(fc.balcao)}</span>
+      <hr>
+      <span><b>Pix a fazer ao dono</b></span><span class="v big">${brl(fc.pixDono)}</span>
+      ${fc.excesso > 0 ? `<span style="grid-column:1/-1;color:var(--warn)" class="sm">O balcão recebeu ${brl(fc.excesso)} a mais que o custo da quadra — combine com o dono para abater na próxima terça.</span>` : ''}
+      <hr>
+      <span>Pix recebido por você</span><span class="v">${brl(fc.pix)}</span>
+      <span>Fica para o caixa</span><span class="v ${fc.pix - fc.pixDono >= 0 ? 'pos':'neg'}">${brl(fc.pix - fc.pixDono)}</span>
+      <span class="sm mu" style="grid-column:1/-1">${d.presentes.filter(id => !isPaid(d,id)).length} ainda não pagaram — se pagarem no balcão depois, o pix ao dono diminui.</span>
+    </div>
+    <div class="btns" style="margin-top:12px"><button class="btn" data-a="copydono">Copiar valor</button><button class="btn ${d.donoPago?'':'pri'}" data-a="donopago">${d.donoPago ? 'Desmarcar pix ao dono' : 'Marcar pix ao dono como feito'}</button></div>
+  </div>`;
+}
+function vTimes(d){
+  if (!d || !d.presentes.length) return '';
+  const head = `<h2>Times <span class="sp btns"><button class="btn sm ${d.times?'':'pri'}" data-a="draw">${d.times ? 'Sortear de novo' : 'Sortear times'}</button>${d.times?'<button class="btn sm bad" data-a="cleartimes">Limpar</button>':''}</span></h2>`;
+  if (!d.times) return `<div class="card">${head}<p class="mu sm">O sorteio coloca 1 jogador de cada pote em cada time (com 20 presentes e 4 por pote). Se os potes estiverem desiguais, ele equilibra pela soma dos potes.</p></div>`;
+  const inT = new Set(d.times.flat());
+  const out = d.presentes.filter(id => !inT.has(id) && !isGol(id));
+  const teams = d.times.map((t,ti) => {
+    const avg = t.length ? (t.reduce((s,id) => s + potOf(d,id), 0) / t.length).toFixed(1) : '-';
+    return `<div class="team"><div class="th" style="background:${TEAMC};color:#fff">${esc(tname(ti))}<small>${t.length} jog · média pote ${avg}</small>${ui.sel && ui.sel.t === -1 ? `<button class="btn sm" style="background:rgba(0,0,0,.25);border:0" data-a="putin" data-t="${ti}">+ aqui</button>`:''}</div>
+      <ul>${t.slice().sort((a,b)=>potOf(d,a)-potOf(d,b)).map(id => { const i = t.indexOf(id); const s = ui.sel && ui.sel.t===ti && ui.sel.i===i;
+        return `<li><button class="${s?'sel':''}" data-a="swap" data-t="${ti}" data-i="${i}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span>${esc(pname(id))}</button></li>`; }).join('')}${vagasOf(d,ti).map(v => `<li><button style="opacity:.6;border:1px dashed var(--line)">${v.pot ? `<span class="pb p${v.pot}">${v.pot}</span>` : ''}Vaga${v.pot ? ' — pote ' + v.pot : ''}</button></li>`).join('')}</ul></div>`;
+  }).join('');
+  return `<div class="card">${head}
+    <p class="sm mu" style="margin-bottom:10px">Toque em um jogador e depois em outro para trocá-los de time.</p>
+    ${out.length ? `<div style="margin-bottom:10px"><div class="sm mu" style="margin-bottom:6px">Sem time (chegaram depois do sorteio) — toque e escolha “+ aqui”:</div><div class="chips">${out.map(id => `<button class="chip ${ui.sel && ui.sel.pid===id?'sel':''}" data-a="pickout" data-id="${id}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span>${esc(pname(id))}</button>`).join('')}</div></div>` : ''}
+    <div class="teams">${teams}</div>
+    <button class="btn pri blk" style="margin-top:12px" data-a="tab" data-k="jogo">Ir para o painel do jogo →</button>
+  </div>`;
+}
+
+/* ---------- JOGO ---------- */
+function goalModal(i, step){
+  const d = S.days[ui.date], e = (live.ev||[])[i]; if (!d || !e) return;
+  const t = d.fila[e.s], team = lineup(d, t);
+  const pb = id => `<span class="pb p${potOf(d,id)}">${potOf(d,id)}</span>`;
+  let h;
+  if (step === 'g'){
+    h = `<h3>⚽ Gol do ${esc(tname(t))}</h3><p class="sm mu">Quem fez?</p>
+      <div class="cand">${team.map(id => `<button data-a="gsc" data-i="${i}" data-p="${id}" style="${e.g===id?'outline:2px solid var(--ac)':''}">${pb(id)}${esc(pname(id))}</button>`).join('')}
+      <button data-a="gsc" data-i="${i}" data-p="contra" style="${e.g==='contra'?'outline:2px solid var(--ac)':''}">Gol contra</button></div>
+      <button class="btn" data-a="mclose">Depois</button>`;
+  } else {
+    h = `<h3><span class="abox">A</span> Assistência</h3><p class="sm mu">Gol de ${esc(pname(e.g))} — quem deu o passe?</p>
+      <div class="cand">${team.filter(id => id !== e.g).map(id => `<button data-a="gas" data-i="${i}" data-p="${id}" style="${e.a===id?'outline:2px solid var(--ac)':''}">${pb(id)}${esc(pname(id))}</button>`).join('')}</div>
+      <button class="btn pri" data-a="gas" data-i="${i}" data-p="">Sem assistência</button>`;
+  }
+  modal(h);
+}
+
+// escalação real do time no jogo (com substitutos; ausentes sem substituto ficam de fora)
+// vagas: time com menos de 5 → uma vaga para cada pote que falta no time
+function vagasOf(d, t){
+  const team = d.times[t] || [], n = Math.max(0, 5 - team.length);
+  const miss = [1,2,3,4,5].filter(p => !team.some(id => potOf(d,id) === p));
+  return Array.from({length:n}, (_,k) => ({ key:`v${t}_${k}`, pot: miss[k] || null }));
+}
+const lineup = (d, t) => [...(d.times[t]||[]).map(id => (d.aus||{})[id] ? (d.subs||{})[id] : id), ...vagasOf(d,t).map(v => (d.subs||{})[v.key])].filter(Boolean);
+function candList(d, key, pt){
+  const sb = (d.subs||{})[key];
+  const used = new Set(Object.values(d.subs||{}));
+  const inT = new Set(d.times.flat());
+  const pool = [...[d.fila[2], d.fila[3]].flatMap(x => d.times[x] || []), ...d.presentes.filter(x => !inT.has(x))]
+    .filter(x => !(d.aus||{})[x] && !isGol(x) && (!used.has(x) || x === sb));
+  const teamOf = x => { const k = d.times.findIndex(tt => tt.includes(x)); return k >= 0 ? tname(k) : 'sem time'; };
+  const last = d.jogos[d.jogos.length - 1], prev = new Set((last && last.comp) || []);
+  const nComp = {}; d.jogos.forEach(j => (j.comp||[]).forEach(x => nComp[x] = (nComp[x]||0) + 1));
+  const btn = x => `<button data-a="setsub" data-id="${key}" data-s="${x}" style="${x===sb?'outline:2px solid var(--ac);':''}${prev.has(x)?'opacity:.55':''}"><span class="pb p${potOf(d,x)}">${potOf(d,x)}</span>${esc(pname(x))}<small>${esc(teamOf(x))}${prev.has(x) ? ' · completou no jogo anterior' : nComp[x] ? ` · completou ${nComp[x]}x hoje` : ''}</small></button>`;
+  if (!pt) return `<div class="sm" style="font-weight:600">Escolha quem completa neste jogo (times de fora):</div><div class="cand">${ord([...pool]).map(btn).join('') || '<p class="sm mu">Ninguém disponível.</p>'}</div>`
+    + (sb ? `<button class="btn blk" data-a="setsub" data-id="${key}" data-s="">Tirar substituto</button>` : '');
+  // Art. 9º e 11: quem completou no jogo anterior vai para o fim; menos complementações hoje vem primeiro
+  const ord = arr => arr.sort((x,y) => (prev.has(x) - prev.has(y)) || ((nComp[x]||0) - (nComp[y]||0)) || (potOf(d,x) - potOf(d,y)));
+  // Art. 8º: mesmo pote ou pote inferior (número maior)
+  const ok = ord(pool.filter(x => potOf(d,x) >= pt)), acima = ord(pool.filter(x => potOf(d,x) < pt));
+  return `<div class="sm" style="font-weight:600">Substituto neste jogo — pote ${pt} ou inferior, dos times de fora:</div>
+    <div class="cand">${ok.map(btn).join('') || '<p class="sm mu">Ninguém do pote ' + pt + ' ou inferior disponível nos times de fora.</p>'}</div>
+    ${acima.length ? `<details><summary class="sm mu" style="cursor:pointer">Potes superiores (fora do regulamento)</summary><div class="cand" style="margin-top:6px">${acima.map(btn).join('')}</div></details>` : ''}
+    ${sb ? `<button class="btn blk" data-a="setsub" data-id="${key}" data-s="">Tirar substituto</button>` : ''}`;
+}
+function empateModal(d, a, b){
+  const first = !d.jogos.length;
+  modal(`<h3>Empate</h3><p class="sm mu">${first ? 'Empate no primeiro jogo: o regulamento manda decidir no <b>par ou ímpar</b> (Art. 21).' : 'Os dois times entraram juntos, então não dá para saber quem entrou por último. Decidam no <b>par ou ímpar</b>.'} Quem fica como <b>PRÓ</b>?</p>
+    <div class="grid2"><button class="btn" style="background:${COLETE[0].c};color:${COLETE[0].t};border:0" data-a="res" data-r="e" data-pro="${a}">${esc(tname(a))}</button>
+    <button class="btn" style="background:${COLETE[1].c};color:${COLETE[1].t};border:0" data-a="res" data-r="e" data-pro="${b}">${esc(tname(b))}</button></div>
+    <button class="btn" data-a="mclose">Cancelar</button>`);
+}
+function vagaModal(d, key, t, pt){
+  const field = (d.filaOk || d.jogos.length) && (d.fila[0] === t || d.fila[1] === t);
+  let h = `<h3>Vaga ${pt ? `<span class="pb p${pt}">${pt}</span>` : ''}</h3><p class="sm mu">${esc(tname(t))} está com ${(d.times[t]||[]).length} jogadores${pt ? ` — falta o pote ${pt}` : ''}.</p>`;
+  h += field ? candList(d, key, pt) : `<p class="sm mu">Quando o time entrar em campo, toque na vaga para escolher quem completa${pt ? ' (do pote ' + pt + ')' : ''}.</p>`;
+  modal(h + `<button class="btn" data-a="mclose">Fechar</button>`);
+}
+function slotModal(d, id, t){
+  const field = (d.filaOk || d.jogos.length) && (d.fila[0] === t || d.fila[1] === t);
+  const aus = (d.aus||{})[id], sb = (d.subs||{})[id], pt = potOf(d,id);
+  let h = `<h3>${esc(pname(id))} <span class="pb p${pt}">${pt}</span></h3><p class="sm mu">${esc(tname(t))}</p>`;
+  if (!aus){
+    h += `<button class="btn blk" data-a="setaus" data-id="${id}">Não chegou / faltou</button>`;
+  } else {
+    if (field){
+      h += candList(d, id, pt);
+    } else h += `<p class="sm mu">O substituto é escolhido quando o time entrar em campo.</p>`;
+    h += `<button class="btn pri blk" data-a="unaus" data-id="${id}">${esc(pname(id).split(' ')[0])} chegou</button>`;
+  }
+  h += `<button class="btn" data-a="mclose">Fechar</button>`;
+  modal(h);
+}
+
+function vOrdem(d){
+  const o = ui.ordem || [];
+  const ROLE = ['Joga — colete amarelo','Joga — colete azul','Pró','Ré'];
+  const roster = t => (d.times[t]||[]).map(id => (d.aus||{})[id] ? `<s>${esc(pname(id))}</s>` : esc(pname(id))).join(' · ');
+  const nAus = t => (d.times[t]||[]).filter(id => (d.aus||{})[id]).length + vagasOf(d,t).length;
+  return `<div class="card">
+    <h2>Primeiro jogo do dia</h2>
+    <p class="mu sm" style="margin-bottom:8px">Toque nos times na ordem de entrada: os dois primeiros começam jogando, o 3º é o pró e o 4º é o ré. Pelo regulamento (Art. 17), <b>times com menos ausentes têm prioridade</b>; empate em ausentes, par ou ímpar.</p>
+    <div class="btns" style="margin-bottom:12px"><button class="btn sm" data-a="ordemaus">Ordenar por ausentes</button><button class="btn sm" data-a="ordemmarcar">Marcar quem não chegou</button></div>
+    <div class="plist">${[0,1,2,3].map(t => { const k = o.indexOf(t);
+      return `<button class="prow" style="text-align:left;${k>=0?'outline:2px solid var(--ac)':''}" data-a="ordem" data-t="${t}">
+        <span class="chk" style="${k>=0?'':'background:transparent;border-color:var(--line);color:var(--mu)'}">${k>=0 ? (k+1)+'º' : ''}</span>
+        <span style="flex:1;min-width:0"><b class="cond" style="font-size:20px;text-transform:uppercase">${esc(tname(t))}</b>
+        ${k>=0 ? `<span class="sm" style="margin-left:6px;color:${k===0?COLETE[0].c:k===1?'#7fb0ff':'var(--ac)'}">${ROLE[k]}</span>` : ''}
+        <span class="sm" style="margin-left:6px;color:${nAus(t)?'var(--warn)':'var(--mu)'}">${nAus(t) ? nAus(t) + ' ausente' + (nAus(t)>1?'s':'') : 'completo'}</span>
+        <span class="sm mu" style="display:block;white-space:normal">${roster(t)}</span></span></button>`; }).join('')}</div>
+    <div class="btns" style="margin-top:12px"><button class="btn" data-a="ordemclr">Limpar</button><button class="btn pri" style="flex:1" data-a="ordemok" ${o.length>=3?'':'disabled'}>Confirmar e ir para o jogo</button></div>
+  </div>`;
+}
+
+function vJogo(){
+  const d = S.days[ui.date];
+  if (!d || !d.times) return `<div class="card empty"><p>Faça o sorteio dos times na aba <b>Sorteio</b> primeiro.</p><br><button class="btn pri" data-a="tab" data-k="sorteio">Ir para o Sorteio</button></div>`;
+  if (!d.filaOk && !d.jogos.length) return vOrdem(d);
+  if (live.date !== ui.date){ live = {...LIVE0(), date:ui.date}; saveLive(); }
+  const [a,b,p,r] = d.fila;
+  const aus = d.aus || {}, subs = d.subs || {};
+  const evb = id => { const ev = live.ev || []; const ng = ev.filter(e => e.g === id).length, na = ev.filter(e => e.a === id).length;
+    return (ng ? ` <b class="evb">${'⚽'.repeat(ng)}</b>` : '') + (na ? ` <b class="evb">${'<span class="abox">A</span>'.repeat(na)}</b>` : ''); };
+  const keyTeam = k => k[0] === 'v' ? +k.slice(1).split('_')[0] : d.times.findIndex(tt => tt.includes(k));
+  const slots = (t, field) => {
+    const team = d.times[t] || [];
+    const items = team.map(id => ({pot:potOf(d,id), id}));
+    vagasOf(d, t).forEach(v => items.push({pot:v.pot || 9, vaga:v}));
+    items.sort((x,y) => x.pot - y.pot);
+    return items.map(it => {
+      if (it.vaga){
+        const v = it.vaga, sb = subs[v.key], pl = v.pot ? `<span class="pb p${v.pot}">${v.pot}</span>` : '<span class="pb" style="background:var(--mu)">?</span>';
+        if (field && sb) return `<button class="slot sub" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>completando a vaga${v.pot ? ' do pote ' + v.pot : ''}</small></span></button>`;
+        if (field) return `<button class="slot vaga" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}">${pl}<span>＋ Completar<small>vaga${v.pot ? ' do pote ' + v.pot : ''}</small></span></button>`;
+        return `<button class="slot aus" style="text-decoration:none" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}">${pl}Vaga${v.pot ? ' — pote ' + v.pot : ''}</button>`;
+      }
+      const id = it.id, pt = it.pot;
+      const emp = !field && Object.keys(subs).find(k => subs[k] === id && (k[0] === 'v' || aus[k]));
+      if (!aus[id]) return `<button class="slot" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>${esc(pname(id))}${field ? evb(id) : ''}${emp ? `<small>completando o ${esc(tname(keyTeam(emp)))}</small>` : ''}</span></button>`;
+      if (!field) return `<button class="slot aus" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span>${esc(pname(id))} (ausente)</button>`;
+      const sb = subs[id];
+      if (sb) return `<button class="slot sub" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>no lugar de ${esc(pname(id))}</small></span></button>`;
+      return `<button class="slot vaga" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>＋ Completar<small>${esc(pname(id))} ausente</small></span></button>`;
+    }).join('');
+  };
+  const roster = t => `<div class="qlist">${slots(t,false)}</div>`;
+  const side = (t, k) => `<div class="side" style="background:${COLETE[k].c};color:${COLETE[k].t}">
+      <div class="tn">${esc(tname(t))}</div><div class="sm" style="font-weight:700;opacity:.8;margin-top:-6px">colete ${COLETE[k].n.toLowerCase()}</div><div class="gl num">${live.g[k]}</div>
+      <div class="gb"><button data-a="gol" data-k="${k}" data-d="-1">−</button><button class="plus" data-a="gol" data-k="${k}" data-d="1">+</button></div>
+      <div class="roster">${slots(t,true)}</div></div>`;
+  const sug = live.done ? (live.g[0] > live.g[1] ? 'a' : live.g[1] > live.g[0] ? 'b' : 'e') : '';
+  const wins = [0,0,0,0]; d.jogos.forEach(j => { if (j.r==='a') wins[j.a]++; else if (j.r==='b') wins[j.b]++; });
+  const st = live.run ? 'Pausar' : (live.acc > 0 && !live.done ? 'Continuar' : 'Iniciar');
+  return `<div class="jgrid"><div class="jmain">
+  <div class="card">
+    <h2>Jogo ${d.jogos.length + 1} ${d.streak && d.streak.n >= 1 && (d.streak.t === a || d.streak.t === b) ? `<span class="chip" style="font-family:Inter;text-transform:none;${d.streak.n >= 2 ? 'background:#5a3d0c;color:#ffd99a' : ''}">${esc(tname(d.streak.t))}: ${d.streak.n} vitória${d.streak.n>1?'s':''} seguida${d.streak.n>1?'s':''}${d.streak.n >= 2 ? ' — se vencer, sai para ré' : ''}</span>` : ''}<span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${S.config.minutos} min ou ${S.config.gols} gols</span></h2>
+    <div class="board">
+      ${side(a,0)}
+      <div class="mid">
+        <div class="clock num" id="clock">${fclock(remaining())}</div>
+        <div class="ctrl">
+          <button class="btn ${live.run?'':'pri'}" data-a="clock" ${live.done?'disabled':''}>${live.run ? '❚❚' : '▶'} ${st}</button>
+          <button class="btn" data-a="reset" title="Zerar">↺</button>
+        </div>
+        ${live.done ? `<div class="sm" style="color:var(--bad);font-weight:700">FIM — ${live.why==='gols' ? S.config.gols + ' gols' : 'tempo esgotado'}</div>` : ''}
+      </div>
+      ${side(b,1)}
+      ${live.done && !ui.pickRes ? `<div class="resdone" style="background:${sug==='e' ? 'var(--s3)' : COLETE[sug==='a'?0:1].c};color:${sug==='e' ? 'var(--tx)' : COLETE[sug==='a'?0:1].t}">
+        <div class="rt">${sug==='e' ? 'Empate' : 'Vitória do ' + esc(tname(sug==='a'?a:b))} <span class="num">${live.g[0]} × ${live.g[1]}</span></div>
+        <div class="btns"><button class="btn pri" data-a="res" data-r="${sug}">Confirmar e ir para o próximo jogo →</button><button class="btn" data-a="pickres">Corrigir</button></div>
+      </div>` : `<div class="result">
+      <button class="btn ${sug==='a'?'sug':''}" style="background:${COLETE[0].c};color:${COLETE[0].t};border:0" data-a="res" data-r="a">Venceu ${esc(tname(a))}</button>
+      <button class="btn ${sug==='e'?'sug':''}" data-a="res" data-r="e">Empate</button>
+      <button class="btn ${sug==='b'?'sug':''}" style="background:${COLETE[1].c};color:${COLETE[1].t};border:0" data-a="res" data-r="b">Venceu ${esc(tname(b))}</button>
+    </div>`}
+    </div>
+    ${(live.ev||[]).length ? `<div class="evlist">${live.ev.map((e,i) => `<button class="chip" data-a="gedit" data-i="${i}"><i class="dot" style="background:${COLETE[e.s].c}"></i>⚽ ${e.g ? (e.g==='contra' ? 'gol contra' : esc(pname(e.g))) : '<span style="color:var(--warn)">quem fez?</span>'}${e.a ? ` <span class="mu"><span class="abox">A</span> ${esc(pname(e.a))}</span>` : ''}</button>`).join('')}</div>` : ''}
+    <p class="sm mu rulehint" style="margin-top:8px;text-align:center">Quem perde sai: o PRÓ entra e o RÉ vira PRÓ · Empate: saem os dois, quem entrou por último volta como PRÓ · 3 vitórias seguidas: o vencedor sai e vai para RÉ</p>
+  </div></div><div class="jside">
+  <div class="card">
+    <h2>Próximos <span class="sp btns"><button class="btn sm" data-a="swapq">⇄ Inverter pró/ré</button><button class="btn sm" data-a="editq">Ajustar fila</button></span></h2>
+    <div class="queue">
+      <div class="qcard" style="border-color:var(--ac)"><div class="ql">Pró — entra no próximo</div><div class="qn">${esc(tname(p))}</div>${roster(p)}</div>
+      <div class="qcard" style="border-color:var(--mu)"><div class="ql">Ré</div><div class="qn">${esc(tname(r))}</div>${roster(r)}</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Jogos do dia ${d.jogos.length ? '<button class="sp btn sm" data-a="undo">Desfazer último</button>' : ''}</h2>
+    ${d.jogos.length ? `<div class="potbar">${[0,1,2,3].map(t => `<span>${esc(tname(t))}: <b>${wins[t]}</b> vit.</span>`).join('')}</div>
+    <div class="hist">${d.jogos.map((j,i) => `<div><span class="mu" style="width:26px">#${i+1}</span><i class="dot" style="background:${COLETE[0].c}"></i><b>${esc(tname(j.a))}</b> <span class="num" style="font-size:18px">${j.ga} × ${j.gb}</span> <b>${esc(tname(j.b))}</b><i class="dot" style="background:${COLETE[1].c}"></i><span class="sp mu sm" style="margin-left:auto">${j.r==='e' ? 'empate' : 'venceu ' + esc(tname(j.r==='a'?j.a:j.b))} · ${fclock(j.dur)}</span>${(j.ev||[]).filter(e=>e.g).length ? `<span class="sm mu" style="flex-basis:100%;padding-left:34px">⚽ ${j.ev.filter(e=>e.g).map(e => (e.g==='contra' ? 'contra' : esc(pname(e.g).split(' ')[0])) + (e.a ? ' <span class="abox">A</span>' + esc(pname(e.a).split(' ')[0]) : '')).join(', ')}</span>` : ''}</div>`).join('')}</div>
+    ${(() => { const st = goalStats([d]); const top = Object.entries(st.g).sort((x,y) => y[1]-x[1]).slice(0,5); const ta = Object.entries(st.a).sort((x,y) => y[1]-x[1]).slice(0,5);
+      return top.length || ta.length ? `<div class="grid2" style="margin-top:10px"><div><div class="sm mu" style="font-weight:700;margin-bottom:4px">⚽ ARTILHARIA DO DIA</div>${top.map(([id,n]) => `<div class="sm">${esc(pname(id))} — <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div><div><div class="sm mu" style="font-weight:700;margin-bottom:4px"><span class="abox">A</span> ASSISTÊNCIAS</div>${ta.map(([id,n]) => `<div class="sm">${esc(pname(id))} — <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div></div>` : ''; })()}`
+    : '<p class="mu sm">Nenhum jogo registrado ainda.</p>'}
+  </div></div></div>`;
+}
+
+/* ---------- CAIXA ---------- */
+function vCal(){
+  const m = ui.calMes || ui.date.slice(0,7); const [y,mo] = m.split('-').map(Number);
+  const first = new Date(y, mo-1, 1), dim = new Date(y, mo, 0).getDate(), hoje = ymd(new Date());
+  const cells = []; for (let i = 0; i < first.getDay(); i++) cells.push('<span></span>');
+  for (let dd = 1; dd <= dim; dd++){
+    const k = `${y}-${pad(mo)}-${pad(dd)}`, dw = new Date(y, mo-1, dd).getDay(), dy = S.days[k];
+    const temJogo = dy && dy.presentes && dy.presentes.length;
+    const pend = temJogo && dy.presentes.some(id => !isPaid(dy,id));
+    cells.push(`<button class="${dw===2?'ter':''} ${k===ui.date?'sel':''} ${k===hoje?'hoje':''}" data-a="pickday" data-d="${k}">${dd}${temJogo ? `<i class="dt ${pend?'pend':''}"></i>` : ''}</button>`);
+  }
+  return `<div class="card">
+    <div class="calh"><button class="btn sm" data-a="calnav" data-n="-1">‹</button><b>${fmonth(m)}</b><button class="btn sm" data-a="calnav" data-n="1">›</button></div>
+    <div class="cal">${['D','S','T','Q','Q','S','S'].map((w,i) => `<span class="wd ${i===2?'t':''}">${w}</span>`).join('')}${cells.join('')}</div>
+    <p class="sm mu" style="margin-top:8px">Terças em destaque. <span style="color:var(--ac)">●</span> dia com jogo · <span style="color:var(--warn)">●</span> com pagamento pendente.</p>
+  </div>`;
+}
+function vPag(d){
+  const lista = (d?.presentes || []).filter(id => !isGol(id)).sort((a,b) => pname(a).localeCompare(pname(b),'pt-BR'));
+  const gols = (d?.presentes || []).filter(isGol);
+  if (!lista.length) return `<div class="card"><h2>Pagamentos — ${fdate(ui.date)}</h2><p class="mu sm">Ninguém marcado como presente neste dia. Marque a presença na aba <b>Lista</b>.</p></div>`;
+  const pagos = lista.filter(id => isPaid(d,id)).length, f = fechamento(d);
+  return `<div class="card">
+    <h2>Pagamentos — ${fdate(ui.date)} <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${pagos}/${lista.length} pagos</span></h2>
+    <div class="stats" style="margin-bottom:10px"><div class="stat"><div class="l">Pix</div><div class="v">${brl(f.pix)}</div></div><div class="stat"><div class="l">Balcão</div><div class="v">${brl(f.balcao)}</div></div></div>
+    <div class="plist">${lista.map(id => { const ok = isPaid(d,id); return `<div class="prow inl">
+      <span class="nm">${esc(pname(id))}${isMensal(d.data,id) ? ' <span class="mtag">M</span>' : ''}</span>
+      ${cobertoMensal(d.data, id) ? '<span class="chip" style="margin-left:auto">Mensalista</span>' : `<div class="pays">${ok ? `<button class="pay ok ${formaOf(d,id)==='balcao'?'bal':''}" data-a="unpay" data-id="${id}">✓ ${({balcao:'Balcão', dinheiro:'Dinheiro'})[formaOf(d,id)] || 'Pix'}</button>`
+        : `<button class="pay" data-a="pay" data-id="${id}" data-f="pix">Pix</button><button class="pay" data-a="pay" data-id="${id}" data-f="balcao">Balcão</button>`}</div>`}</div>`; }).join('')}</div>
+    ${gols.length ? `<p class="sm mu" style="margin-top:8px">🧤 Goleiros (não pagam): ${gols.map(id => esc(pname(id))).join(', ')}</p>` : ''}
+    <p class="sm mu" style="margin-top:6px">Toque no “✓” para desfazer um pagamento.</p>
+  </div>`;
+}
+/* ---------- MENSALISTAS ---------- */
+function tercasDo(m){ const [y,mo] = m.split('-').map(Number); const out = []; const t = new Date(y, mo-1, 1);
+  while (t.getMonth() === mo-1){ if (t.getDay() === 2) out.push(ymd(t)); t.setDate(t.getDate()+1); } return out; }
+function mesDraft(m){
+  if (S.meses[m]) return S.meses[m];
+  ui.mDraft ||= {};
+  return ui.mDraft[m] ||= { valor: Number(S.config.valorMensal ?? 100), datas: tercasDo(m).slice(0,4),
+    mens: Object.entries(S.players).filter(([,p]) => p.mensalista && p.ativo !== false && !p.goleiro).map(([id]) => id), pag:{}, forma:{} };
+}
+function vMensCad(){
+  const m = ui.mesM || (() => { const t = new Date(); return ymd(new Date(t.getFullYear(), t.getMonth() + (t.getDate() > 20 ? 1 : 0), 1)).slice(0,7); })();
+  const M = mesDraft(m), salvo = !!S.meses[m];
+  const ters = tercasDo(m), cand = Object.entries(S.players).filter(([id,p]) => !p.goleiro && (p.ativo !== false || (M.mens||[]).includes(id))).sort((a,b) => a[1].nome.localeCompare(b[1].nome,'pt-BR'));
+  const nM = (M.mens||[]).length, nD = (M.datas||[]).length;
+  return `<div class="card">
+    <h2>Mensalistas <span class="sp"><input type="month" data-c="mesM" value="${m}" style="width:auto;padding:6px 8px"></span></h2>
+    ${salvo ? '' : `<div class="banner" style="margin-bottom:10px">Mês ainda não configurado. Confira os dados abaixo e toque em <b>Salvar mês</b>.</div>`}
+    <div class="grid2" style="margin-bottom:10px">
+      <label class="f">Valor da mensalidade (R$)<input type="number" step="0.01" data-c="mValor" value="${M.valor}"></label>
+      <div class="stat"><div class="l">Por jogo</div><div class="v" style="font-size:22px">${nD ? brl((Number(M.valor)||0)/nD) : '—'}</div></div>
+    </div>
+    <div class="sm" style="font-weight:600;margin-bottom:6px">Terças cobertas pela mensalidade <span class="mu" style="font-weight:500">(${nD} de ${ters.length})</span></div>
+    <div class="chips" style="margin-bottom:6px">${ters.map(t => `<button class="chip ${(M.datas||[]).includes(t)?'sel':''}" style="${(M.datas||[]).includes(t)?'background:var(--ac2)':'opacity:.6'}" data-a="mData" data-d="${t}">${(M.datas||[]).includes(t)?'✓ ':''}${fdate(t)}</button>`).join('')}</div>
+    <p class="sm mu" style="margin-bottom:10px">Na terça que não estiver marcada, o mensalista paga como avulso.</p>
+    <div class="sm" style="font-weight:600;margin-bottom:6px">Mensalistas do mês <span class="mu" style="font-weight:500">(${nM})</span></div>
+    <div class="chips">${cand.map(([id,p]) => { const on = (M.mens||[]).includes(id); return `<button class="chip ${on?'sel':''}" style="${on?'':'opacity:.55'}" data-a="mMen" data-id="${id}">${on?'✓ ':''}${esc(p.nome)}</button>`; }).join('')}</div>
+    <p class="sm mu" style="margin-top:8px">Vem marcado quem tem “Mensalista” no cadastro. Toque para incluir ou tirar só deste mês.</p>
+    ${salvo ? `<p class="sm" style="margin-top:8px;color:var(--ac)">✓ Mês salvo — alterações são gravadas na hora. Pagamentos das mensalidades ficam na aba Caixa.</p><button class="btn bad sm" style="margin-top:6px" data-a="mDel">Excluir configuração do mês</button>`
+      : `<button class="btn pri blk" style="margin-top:12px" data-a="mSave">Salvar mês</button>`}
+  </div>`;
+}
+function vMensCaixa(m){
+  const M = S.meses[m]; if (!M || !(M.mens||[]).length) return '';
+  const lista = [...M.mens].sort((a,b) => pname(a).localeCompare(pname(b),'pt-BR'));
+  const pagos = lista.filter(id => (Number((M.pag||{})[id])||0) >= (Number(M.valor)||0) - 0.009);
+  const tot = Object.values(M.pag||{}).reduce((s,v) => s + (Number(v)||0), 0);
+  return `<div class="card">
+    <h2>Mensalidades — ${fmonth(m)} <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${pagos.length}/${lista.length} pagos · ${brl(tot)}</span></h2>
+    <p class="sm mu" style="margin-bottom:8px">${brl(M.valor)} cobrindo ${(M.datas||[]).map(t => fdate(t).split(' ')[1]).join(', ')}.</p>
+    <div class="plist">${lista.map(id => { const ok = pagos.includes(id), f = (M.forma||{})[id];
+      return `<div class="prow inl"><span class="nm">${esc(pname(id))}</span><div class="pays">${ok
+        ? `<button class="pay ok ${f==='balcao'?'bal':''}" data-a="munpay" data-m="${m}" data-id="${id}">✓ ${f==='balcao'?'Balcão':'Pix'}</button>`
+        : `<button class="pay" data-a="mpay" data-m="${m}" data-id="${id}" data-f="pix">Pix</button><button class="pay" data-a="mpay" data-m="${m}" data-id="${id}" data-f="balcao">Balcão</button>`}</div></div>`; }).join('')}</div>
+  </div>`;
+}
+function vCaixa(){
+  const c = caixa(), dbt = debts();
+  const dd = Object.entries(dbt).sort((x,y) => y[1].total - x[1].total);
+  const totDev = dd.reduce((s,[,v]) => s + v.total, 0);
+  const d = S.days[ui.date];
+  const led = Object.entries(S.ledger).sort((x,y) => (y[1].data||'').localeCompare(x[1].data||''));
+  const days = playedDays().reverse();
+  return `
+  ${vCal()}
+  ${vPag(d)}
+  ${vMensCaixa(ui.date.slice(0,7))}
+  ${d && (d.presentes.length || d.dev) ? vFech(d, fechamento(d)) : ''}
+  <div class="card">
+    <h2>Saldo em caixa</h2>
+    <div class="stats">
+      <div class="stat"><div class="l">Saldo atual</div><div class="v ${c.saldo>=0?'pos':'neg'}">${brl(c.saldo)}</div></div>
+      <div class="stat"><div class="l">Arrecadado</div><div class="v">${brl(c.arrec)}</div></div>
+      <div class="stat"><div class="l">Quadra</div><div class="v">${brl(c.quadra)}</div></div>
+      <div class="stat"><div class="l">Outras saídas</div><div class="v">${brl(c.sai)}</div></div>
+      <div class="stat"><div class="l">A receber</div><div class="v" style="color:var(--warn)">${brl(totDev)}</div></div>
+    </div>
+    <p class="sm mu" style="margin-top:8px">Saldo = pagamentos recebidos − aluguel da quadra + entradas avulsas − saídas (churrasco, bolas…).</p>
+  </div>
+  ${d && d.presentes.length ? `<div class="card"><h2>${fdate(ui.date)}</h2>
+    <div class="grid2"><label class="f">Valor por jogador<input type="number" step="0.01" data-c="dayval" value="${d.valor}"></label><label class="f">Custo da quadra no dia<input type="number" step="0.01" data-c="daycost" value="${d.custo}"></label></div>
+    <p class="sm mu" style="margin-top:8px">Esses valores ficam gravados no dia. Mudar o padrão em Cadastro não altera dias passados.</p></div>` : ''}
+  <div class="card">
+    <h2>Pendências <span class="sm mu" style="font-family:Inter;text-transform:none;font-weight:500">dias anteriores</span><span class="sp btns">${dd.length ? '<button class="btn sm" data-a="copycob">Copiar cobrança</button>' : ''}</span></h2>
+    ${dd.length ? dd.map(([id,v]) => `<div class="debt"><div class="top">${esc(pname(id))}${/^Convidado .+/.test(S.players[id]?.classe||'') ? `<span class="sm mu" style="font-weight:500">(${esc(S.players[id].classe.replace('Convidado','conv.'))})</span>` : ''}${v.credito > 0.009 ? `<span class="sm mu" style="font-weight:500">(já descontado crédito de ${brl(v.credito)})</span>` : ''}<span class="v">${brl(v.total)}</span></div>
+      <div class="days">${v.days.map(x => `<button class="chip" data-a="quitar" data-id="${id}" data-d="${x.date}">${x.mes ? 'Mensal ' + fmonth(x.date).split(' ')[0] : fdate(x.date)} · ${brl(x.due)} <b style="color:var(--ac)">quitar</b></button>`).join('')}
+      ${v.days.length > 1 ? `<button class="chip" style="background:var(--ac2)" data-a="quitartudo" data-id="${id}">quitar tudo</button>` : ''}</div></div>`).join('')
+      : '<p class="mu">Ninguém devendo. 👏</p>'}
+    ${(() => { const c = credits(); return c.length ? `<div class="sm" style="margin-top:10px"><b>Créditos</b> (pagaram a mais): ${c.map(([id,v]) => `${esc(pname(id))} ${brl(v)}`).join(' · ')}</div>` : ''; })()}
+  </div>
+  ${(() => { const f = faltando(); return f.length ? `<div class="card"><h2>Terças sem registro <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${f.length}</span></h2>
+    <p class="sm mu" style="margin-bottom:8px">Desde o início do futebol. Toque para abrir o dia e lançar presença e pagamentos — ou marque que não teve jogo.</p>
+    <div class="chips">${f.map(dt => `<button class="chip" data-a="goday" data-d="${dt}">${fdate(dt)}/${dt.slice(2,4)}</button>`).join('')}</div></div>` : ''; })()}
+  <div class="card">
+    <h2>Lançamentos avulsos</h2>
+    <div class="grid2" style="margin-bottom:8px">
+      <label class="f">Tipo<select id="lgTipo"><option value="saida">Saída (churrasco, bolas…)</option><option value="entrada">Entrada (saldo inicial, doação…)</option></select></label>
+      <label class="f">Data<input type="date" id="lgData" value="${ymd(new Date())}"></label>
+      <label class="f">Descrição<input id="lgDesc" placeholder="Ex.: Churrasco de novembro"></label>
+      <label class="f">Valor (R$)<input type="number" step="0.01" id="lgVal" placeholder="0,00"></label>
+    </div>
+    <button class="btn pri" data-a="addlg">Lançar</button>
+    ${led.length ? `<div class="tbl" style="margin-top:12px"><table><tr><th>Data</th><th>Descrição</th><th class="r">Valor</th><th></th></tr>
+      ${led.map(([id,l]) => `<tr><td>${esc(fdate(l.data))}</td><td>${esc(l.desc)}</td><td class="r ${l.tipo==='entrada'?'pos':'neg'}">${l.tipo==='entrada'?'+':'−'} ${brl(l.valor)}</td><td class="r"><button class="btn sm bad" data-a="dellg" data-id="${id}">×</button></td></tr>`).join('')}</table></div>` : ''}
+  </div>
+  <div class="card">
+    <h2>Dias de jogo</h2>
+    ${days.length ? `<div class="tbl"><table><tr><th>Dia</th><th class="r">Pres.</th><th class="r">Pix</th><th class="r">Balcão</th><th class="r">Pix dono</th><th class="r">Resultado</th></tr>
+    ${days.map(x => { const f = fechamento(x); const res = f.pix + f.balcao - f.custo;
+      return `<tr><td><button class="btn sm" data-a="goday" data-d="${x.data}">${fdate(x.data)}</button></td><td class="r">${x.presentes.length}${x.obs ? ' <span title="a revisar" style="color:var(--warn)">⚠</span>' : ''}</td><td class="r">${brl(f.pix)}</td><td class="r">${brl(f.balcao)}</td><td class="r">${brl(f.pixDono)} ${x.donoPago ? '<span class="pos">✓</span>' : f.pixDono > 0 ? '<span style="color:var(--warn)" title="pendente">•</span>' : ''}</td><td class="r ${res>=0?'pos':'neg'}">${brl(res)}</td></tr>`; }).join('')}
+    </table></div>` : '<p class="mu">Nenhum dia registrado.</p>'}
+  </div>`;
+}
+
+/* ---------- RELATÓRIOS ---------- */
+function monthData(m){
+  const days = playedDays().filter(d => d.data.startsWith(m));
+  const rows = {};
+  for (const d of days) for (const id of partsOf(d)){
+    const r = rows[id] ||= {pres:0, devido:0, pago:0};
+    if ((d.presentes||[]).includes(id)) r.pres++; r.devido += dueOf(d,id); r.pago += paidOf(d,id);
+  }
+  const Mm = S.meses[m]; let mensal = 0;
+  if (Mm) for (const id of Mm.mens||[]){ const r = rows[id] ||= {pres:0, devido:0, pago:0}; r.devido += Number(Mm.valor)||0; const pg = Number((Mm.pag||{})[id])||0; r.pago += pg; mensal += pg; }
+  const w = winsByPlayer(days), gs = goalStats(days);
+  const led = Object.values(S.ledger).filter(l => (l.data||'').startsWith(m));
+  const ent = led.filter(l => l.tipo==='entrada').reduce((s,l) => s + (Number(l.valor)||0), 0);
+  const sai = led.filter(l => l.tipo!=='entrada').reduce((s,l) => s + (Number(l.valor)||0), 0);
+  const quadra = days.reduce((s,d) => s + (Number(d.custo)||0), 0);
+  const devido = Object.values(rows).reduce((s,r) => s + r.devido, 0);
+  const pago = Object.values(rows).reduce((s,r) => s + r.pago, 0);
+  const jogos = days.reduce((s,d) => s + (d.jogos||[]).length, 0);
+  const fs = days.map(fechamento); const pix = fs.reduce((s,f) => s + f.pix, 0), balcao = fs.reduce((s,f) => s + f.balcao, 0), pixDono = fs.reduce((s,f) => s + f.pixDono, 0);
+  return { days, rows, w, gs, ent, sai, quadra, devido, pago, jogos, led, pix, balcao, pixDono, mensal };
+}
+function vRel(){
+  const m = ui.mes, x = monthData(m);
+  const rows = Object.entries(x.rows).sort((a,b) => b[1].pres - a[1].pres || pname(a[0]).localeCompare(pname(b[0]),'pt-BR'));
+  const res = x.pago - x.quadra + x.ent - x.sai;
+  return `
+  <div class="card">
+    <h2>Relatório mensal <span class="sp"><input type="month" data-c="mes" value="${m}" style="width:auto;padding:6px 8px"></span></h2>
+    <div class="stats">
+      <div class="stat"><div class="l">Dias de jogo</div><div class="v">${x.days.length}</div></div>
+      <div class="stat"><div class="l">Jogos</div><div class="v">${x.jogos}</div></div>
+      <div class="stat"><div class="l">Presenças</div><div class="v">${rows.reduce((s,[,r]) => s + r.pres, 0)}</div></div>
+      <div class="stat"><div class="l">Devido</div><div class="v">${brl(x.devido)}</div></div>
+      <div class="stat"><div class="l">Recebido</div><div class="v pos">${brl(x.pago)}</div></div>
+      <div class="stat"><div class="l">via Pix</div><div class="v">${brl(x.pix)}</div></div>
+      <div class="stat"><div class="l">via Balcão</div><div class="v">${brl(x.balcao)}</div></div>
+      <div class="stat"><div class="l">Pix ao dono</div><div class="v">${brl(x.pixDono)}</div></div>
+      <div class="stat"><div class="l">Em aberto</div><div class="v" style="color:var(--warn)">${brl(x.devido - x.pago)}</div></div>
+      <div class="stat"><div class="l">Quadra</div><div class="v">${brl(x.quadra)}</div></div>
+      <div class="stat"><div class="l">Saídas avulsas</div><div class="v">${brl(x.sai)}</div></div>
+      <div class="stat"><div class="l">Resultado do mês</div><div class="v ${res>=0?'pos':'neg'}">${brl(res)}</div></div>
+    </div>
+    <div class="btns" style="margin-top:12px"><button class="btn" data-a="copyrel">Copiar relatório</button></div>
+  </div>
+  <div class="card">
+    <h2>Por jogador</h2>
+    ${rows.length ? `<div class="tbl"><table><tr><th>Jogador</th><th class="r">Pres.</th><th class="r">Vitórias</th><th class="r">Gols</th><th class="r">Assist.</th><th class="r">Devido</th><th class="r">Pago</th><th class="r">Aberto</th></tr>
+      ${rows.map(([id,r]) => { const ab = r.devido - r.pago; return `<tr><td>${esc(pname(id))}</td><td class="r">${r.pres}/${x.days.length}</td><td class="r">${x.w[id]||0}</td><td class="r">${x.gs.g[id]||0}</td><td class="r">${x.gs.a[id]||0}</td><td class="r">${brl(r.devido)}</td><td class="r">${brl(r.pago)}</td><td class="r ${ab>0.009?'neg':''}">${ab>0.009?brl(ab):'—'}</td></tr>`; }).join('')}
+    </table></div>` : '<p class="mu">Sem jogos neste mês.</p>'}
+  </div>`;
+}
+function relText(m){
+  const x = monthData(m);
+  const rows = Object.entries(x.rows).sort((a,b) => b[1].pres - a[1].pres);
+  let t = `⚽ *FUT TERÇA — ${fmonth(m).toUpperCase()}*\n\n`;
+  t += `Dias de jogo: ${x.days.length} · Jogos: ${x.jogos}\nRecebido: ${brl(x.pago)} (Pix ${brl(x.pix)} · Balcão ${brl(x.balcao)})\nEm aberto: ${brl(x.devido - x.pago)}\nQuadra: ${brl(x.quadra)} · Saídas: ${brl(x.sai)}${x.ent?` · Entradas: ${brl(x.ent)}`:''}\nResultado do mês: ${brl(x.pago - x.quadra + x.ent - x.sai)}\nSaldo em caixa: ${brl(caixa().saldo)}\n\n`;
+  const art = Object.entries(x.gs.g).sort((a,b) => b[1]-a[1]).slice(0,5), asi = Object.entries(x.gs.a).sort((a,b) => b[1]-a[1]).slice(0,5);
+  if (art.length) t += `⚽ *Artilharia*\n${art.map(([id,n],i) => `${i+1}. ${pname(id)} — ${n}`).join('\n')}\n\n`;
+  if (asi.length) t += `🅰️ *Assistências*\n${asi.map(([id,n],i) => `${i+1}. ${pname(id)} — ${n}`).join('\n')}\n\n`;
+  t += `*Presença*\n`;
+  rows.forEach(([id,r]) => { const ab = r.devido - r.pago; t += `${pname(id)} — ${r.pres}/${x.days.length}${ab>0.009 ? ` (deve ${brl(ab)})` : ''}\n`; });
+  return t;
+}
+
+/* ---------- CADASTRO ---------- */
+function vCad(){
+  const ps = Object.entries(S.players).sort((a,b) => (b[1].ativo!==false) - (a[1].ativo!==false) || a[1].nome.localeCompare(b[1].nome,'pt-BR'));
+  const c = S.config;
+  return `
+  <div class="card">
+    <h2>Cadastro</h2>
+    <div class="seg" style="margin-bottom:10px"><button class="${ui.addMode==='lote'?'':'on'}" data-a="addmode" data-m="ind">Adicionar individual</button><button class="${ui.addMode==='lote'?'on':''}" data-a="addmode" data-m="lote">Adicionar em lote</button></div>
+    ${ui.addMode === 'lote' ? `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <textarea id="bulk" rows="6" placeholder="João;1&#10;Pedro;3&#10;Carlos (sem pote = 3)&#10;Klisman;G (goleiro)"></textarea>
+      <p class="sm mu">Um por linha: <b>nome;pote</b>. Use <b>G</b> no lugar do pote para goleiro. Sem pote, entra no 3.</p>
+      <button class="btn pri" data-a="bulk">Adicionar todos</button></div>`
+    : `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><input id="newName" placeholder="Nome do jogador" style="flex:1 1 100%"><select id="newPot" style="flex:1">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===3?'selected':''}>Pote ${n}</option>`).join('')}<option value="G">🧤 Goleiro</option></select><button class="btn pri" data-a="addp">Adicionar</button></div>`}
+    ${(() => { const crow = ([id,p]) => `<div class="prow ${p.ativo===false?'off':''}">
+      <span class="nm">${esc(p.nome)}${p.mensalista ? ' <span class="mtag">M</span>' : ''}</span>
+      ${p.goleiro ? '<span class="chip">🧤 Goleiro</span>' : `<div class="pots">${[1,2,3,4,5].map(n => `<button class="pot p${n} ${n===p.pote?'sel':''}" data-a="ppot" data-id="${id}" data-n="${n}">${n}</button>`).join('')}</div>`}
+      <button class="btn sm" data-a="pedit" data-id="${id}">Editar</button></div>`;
+      const J = ps.filter(([,p]) => !p.goleiro), G = ps.filter(([,p]) => p.goleiro);
+      return `<div class="sect">Jogadores <span class="mu">· ${(n => n + (n === 1 ? ' ativo' : ' ativos'))(J.filter(([,p]) => p.ativo!==false).length)}</span></div><div class="plist">${J.map(crow).join('') || '<div class="empty">Nenhum jogador</div>'}</div>
+        <div class="sect">🧤 Goleiros <span class="mu">· ${(n => n + (n === 1 ? ' ativo' : ' ativos'))(G.filter(([,p]) => p.ativo!==false).length)}</span></div><div class="plist">${G.map(crow).join('') || '<div class="empty sm">Nenhum goleiro cadastrado</div>'}</div>`; })()}
+  </div>
+  ${vMensCad()}
+  <div class="card">
+    <h2>Ajustes</h2>
+    <div class="grid3">
+      <label class="f">Valor da hora (R$)<input type="number" step="0.01" id="cfH" value="${c.valorHora}"></label>
+      <label class="f">Horas por dia<input type="number" step="0.5" id="cfHs" value="${c.horas}"></label>
+      <label class="f">Valor por jogador (R$)<input type="number" step="0.01" id="cfV" value="${c.valorJogador}"></label>
+      <label class="f">Mensalidade padrão (R$)<input type="number" step="0.01" id="cfMen" value="${c.valorMensal ?? 100}"></label>
+      <label class="f">Minutos por jogo<input type="number" id="cfM" value="${c.minutos}"></label>
+      <label class="f">Gols para encerrar<input type="number" id="cfG" value="${c.gols}"></label>
+    </div>
+    <button class="btn pri" style="margin-top:10px" data-a="savecfg">Salvar ajustes</button>
+  </div>
+  <div class="card">
+    <h2>Backup</h2>
+    <div class="btns"><button class="btn" data-a="backup">Copiar backup</button><button class="btn bad" data-a="logout">Sair deste aparelho</button><button class="btn" data-a="import">Restaurar backup</button></div>
+  </div>`;
+}
+
+/* ================= ações ================= */
+const A = {
+  lgSend: async () => { const em = ($('#lgEmail').value || '').trim(); if (!em) return;
+    const { error } = await sb.auth.signInWithOtp({ email: em, options: { shouldCreateUser: true } });
+    if (error){ loginView(/not allowed|signups|not found|Signups/i.test(error.message) ? 'Esse e-mail não tem acesso ao app.' : 'Não foi possível enviar: ' + error.message); return; }
+    ui.loginEmail = em; loginView(); setTimeout(() => $('#lgCode')?.focus(), 50); },
+  lgVerify: async () => { const tk = ($('#lgCode').value || '').trim();
+    const { error } = await sb.auth.verifyOtp({ email: ui.loginEmail, token: tk, type: 'email' });
+    if (error){ loginView('Código inválido ou expirado. Tente de novo.'); return; }
+    ui.loginEmail = null; startData(); },
+  lgBack: () => { ui.loginEmail = null; loginView(); },
+  logout: async () => { if (!(await ask('Sair do app neste aparelho?', 'Sair'))) return; await sb.auth.signOut(); localStorage.removeItem('futterca_cache'); location.reload(); },
+  tab: x => { ui.tab = x.k; ui.sel = null; location.hash = x.k; render(); window.scrollTo(0,0); },
+  mclose: () => { closeModal(); if (askRes){ askRes(false); askRes = null; } },
+  askyes: () => { const r = askRes; askRes = null; closeModal(); r && r(true); },
+  askno:  () => { const r = askRes; askRes = null; closeModal(); r && r(false); },
+  solo: () => { ui.soloPres = !ui.soloPres; render(); },
+  allpres: async () => {
+    const d = getDay(ui.date, true);
+    const act = Object.entries(S.players).filter(([,p]) => p.ativo !== false).map(([id]) => id);
+    const allOn = act.length && act.every(id => d.presentes.includes(id));
+    if (allOn){
+      const pagos = d.presentes.filter(id => paidOf(d,id) > 0).length;
+      if (!(await ask('Desmarcar a presença de todos?' + (pagos ? ` ${pagos} pagamento(s) registrado(s) também serão apagados.` : '') + (d.times ? ' Os times sorteados serão limpos.' : ''), 'Desmarcar todos', true))) return;
+      d.presentes = []; d.pag = {}; d.potes = {}; d.times = null; d.fila = [0,1,2,3];
+    } else {
+      act.forEach(id => { if (!d.presentes.includes(id)) d.presentes.push(id); });
+    }
+    saveDay(ui.date); render();
+  },
+
+  pres: async x => {
+    const d = getDay(ui.date, true); const i = d.presentes.indexOf(x.id);
+    if (i >= 0){
+      if (paidOf(d, x.id) > 0 && !(await ask(`${esc(pname(x.id))} já tem pagamento registrado neste dia. Remover presença e o pagamento?`, 'Remover', true))) return;
+      d.presentes.splice(i,1); delete d.pag[x.id]; delete d.potes[x.id];
+      if (d.times) d.times = d.times.map(t => t.filter(id => id !== x.id));
+    } else d.presentes.push(x.id);
+    saveDay(ui.date);
+    if (ui.filtro){ ui.filtro = ''; render(); const f = $('#filtro'); if (f) f.focus(); } else render();
+  },
+  pot: x => { const d = getDay(ui.date, true); const n = +x.n;
+    if (n === S.players[x.id]?.pote) delete d.potes[x.id]; else d.potes[x.id] = n; saveDay(ui.date); render(); },
+  pickday: x => { ui.date = x.d; ui.calMes = x.d.slice(0,7); render(); },
+  calnav: x => { const m = ui.calMes || ui.date.slice(0,7); const [y,mo] = m.split('-').map(Number); const dt = new Date(y, mo-1 + (+x.n), 1); ui.calMes = ymd(dt).slice(0,7); render(); },
+  mData: x => { const m = x.d.slice(0,7), M = mesDraft(m); const i = M.datas.indexOf(x.d); if (i >= 0) M.datas.splice(i,1); else { M.datas.push(x.d); M.datas.sort(); } if (S.meses[m]) save('meses/' + m, M); render(); },
+  mMen: x => { const m = ui.mesM || $('[data-c=mesM]').value, M = mesDraft(m); const i = M.mens.indexOf(x.id); if (i >= 0) M.mens.splice(i,1); else M.mens.push(x.id); if (S.meses[m]) save('meses/' + m, M); render(); },
+  mSave: () => { const m = $('[data-c=mesM]').value, M = mesDraft(m); S.meses[m] = M; delete ui.mDraft[m]; save('meses/' + m, M); toast('Mês salvo'); render(); },
+  mDel: async () => { const m = $('[data-c=mesM]').value; if (!(await ask(`Excluir a configuração de mensalistas de ${fmonth(m)}? Os pagamentos de mensalidade desse mês também serão apagados.`, 'Excluir', true))) return; delete S.meses[m]; save('meses/' + m, null); render(); },
+  mpay: x => { const M = S.meses[x.m]; (M.pag ||= {})[x.id] = Number(M.valor)||0; (M.forma ||= {})[x.id] = x.f; save('meses/' + x.m, M); render(); },
+  munpay: x => { const M = S.meses[x.m]; delete (M.pag||{})[x.id]; delete (M.forma||{})[x.id]; save('meses/' + x.m, M); render(); },
+  resetpotes: () => { const d = S.days[ui.date]; d.potes = {}; saveDay(ui.date); render(); },
+  revisado: () => { const d = S.days[ui.date]; delete d.obs; saveDay(ui.date); render(); },
+  semjogo: () => { const d = getDay(ui.date, true); d.semJogo = !d.semJogo; saveDay(ui.date); render(); },
+  pay: x => { const d = getDay(ui.date, true); d.pag[x.id] = dueOf(d, x.id); (d.forma ||= {})[x.id] = x.f; saveDay(ui.date); render(); },
+  unpay: x => { const d = getDay(ui.date, true); delete d.pag[x.id]; if (d.forma) delete d.forma[x.id]; saveDay(ui.date); render(); },
+  copydono: () => { const fc = fechamento(S.days[ui.date]); copyText(fc.pixDono.toFixed(2).replace('.', ',')); },
+  donopago: () => { const d = S.days[ui.date]; d.donoPago = !d.donoPago; saveDay(ui.date); render(); },
+  quickadd: () => {
+    const n = $('#quickAdd').value.trim(); if (!n) return;
+    const id = uid(); const qv = $('#quickPot').value; S.players[id] = { nome:n, pote:qv === 'G' ? 3 : +qv, ativo:true, criado:ymd(new Date()), ...(qv === 'G' ? {goleiro:true} : {}) }; savePlayer(id);
+    const d = getDay(ui.date, true); d.presentes.push(id); saveDay(ui.date); render();
+  },
+  draw: async () => {
+    const d = getDay(ui.date, true);
+    if (d.jogos.length && !(await ask('Já há jogos registrados hoje. Sortear de novo vai trocar os times (o histórico fica). Continuar?', 'Sortear'))) return;
+    const linha = d.presentes.filter(id => !isGol(id)); const n = linha.length;
+    if (n < 8){ toast('Marque pelo menos 8 jogadores de linha'); return; }
+    // Art. 1º: mínimo 15, máximo 20
+    if ((n < 15 || n > 20) && !(await ask(`Há ${n} jogadores de linha presentes. O regulamento prevê entre 15 e 20. Sortear mesmo assim?`, 'Sortear'))) return;
+    const list = [];
+    [1,2,3,4,5].forEach(p => list.push(...shuffle(linha.filter(id => potOf(d,id) === p))));
+    const T = [[],[],[],[]], score = [0,0,0,0];
+    for (const id of list){
+      const min = Math.min(...T.map(t => t.length));
+      const cand = [0,1,2,3].filter(t => T[t].length === min);
+      const best = Math.min(...cand.map(t => score[t]));
+      const pick = shuffle(cand.filter(t => score[t] === best))[0];
+      T[pick].push(id); score[pick] += 6 - potOf(d,id);
+    }
+    d.times = shuffle(T); d.fila = [0,1,2,3]; d.filaOk = false; ui.sel = null; ui.ordem = [];
+    live = {...LIVE0(), date:ui.date}; saveLive();
+    saveDay(ui.date); render();
+  },
+  cleartimes: async () => { if (!(await ask('Apagar os times sorteados?', 'Apagar', true))) return;
+    const d = getDay(ui.date); d.times = null; d.fila = [0,1,2,3]; saveDay(ui.date); render(); },
+  swap: x => {
+    const d = S.days[ui.date], t = +x.t, i = +x.i;
+    if (ui.sel && ui.sel.t === -1){ // mover jogador sem time para o lugar deste (o de fora vai para "sem time")
+      d.times[t][i] = ui.sel.pid; ui.sel = null; saveDay(ui.date); render(); return; }
+    if (!ui.sel){ ui.sel = {t,i}; render(); return; }
+    if (ui.sel.t === t && ui.sel.i === i){ ui.sel = null; render(); return; }
+    const a = ui.sel; [d.times[a.t][a.i], d.times[t][i]] = [d.times[t][i], d.times[a.t][a.i]];
+    ui.sel = null; saveDay(ui.date); render();
+  },
+  pickout: x => { ui.sel = ui.sel && ui.sel.pid === x.id ? null : {t:-1, pid:x.id}; render(); },
+  putin: x => { const d = S.days[ui.date]; d.times[+x.t].push(ui.sel.pid); ui.sel = null; saveDay(ui.date); render(); },
+
+  clock: () => {
+    audio();
+    if (live.run){ live.acc = elapsed(); live.run = false; keepAwake(false); }
+    else { live.start = Date.now(); live.run = true; live.date = ui.date; keepAwake(true); }
+    saveLive(); render();
+  },
+  reset: async () => { ui.pickRes = false; if ((live.acc > 0 || live.run || live.g[0] || live.g[1]) && !(await ask('Zerar cronômetro e placar?', 'Zerar'))) return;
+    live = {...LIVE0(), date:ui.date}; saveLive(); keepAwake(false); render(); },
+  gol: x => {
+    audio(); const k = +x.k; live.ev ||= [];
+    if (+x.d < 0){
+      if (live.g[k] <= 0) return;
+      live.g[k]--; for (let i = live.ev.length - 1; i >= 0; i--) if (live.ev[i].s === k){ live.ev.splice(i,1); break; }
+      saveLive(); render(); return;
+    }
+    live.g[k]++; live.ev.push({s:k}); saveLive();
+    if (live.g[k] >= (Number(S.config.gols)||3) && !live.done) endGame('gols'); else render();
+    goalModal(live.ev.length - 1, 'g');
+  },
+  gedit: x => goalModal(+x.i, 'g'),
+  gsc: x => { const e = live.ev[+x.i]; if (!e) return; e.g = x.p || null; if (e.a === e.g) e.a = null; saveLive(); render();
+    if (x.p && x.p !== 'contra') goalModal(+x.i, 'a'); else closeModal(); },
+  gas: x => { const e = live.ev[+x.i]; if (!e) return; e.a = x.p || null; saveLive(); closeModal(); render(); },
+  pickres: () => { ui.pickRes = true; render(); },
+  res: async x => {
+    ui.pickRes = false;
+    const d = S.days[ui.date]; const [a,b,p,r] = d.fila;
+    if (!live.done && !live.run && live.acc === 0 && !(await ask('O cronômetro não foi usado. Registrar o resultado mesmo assim?', 'Registrar'))) return;
+    if (live.run){ live.acc = elapsed(); live.run = false; }
+    // Empate: Art. 22 — quem entrou por último volta como pró; Art. 21 / sem como saber — par ou ímpar
+    let proE = null;
+    if (x.r === 'e'){
+      if (x.pro !== undefined && x.pro !== '') proE = +x.pro;
+      else if (d.entrou === a || d.entrou === b) proE = d.entrou;
+      else { empateModal(d, a, b); return; }
+    }
+    const j = { a, b, ga:live.g[0], gb:live.g[1], r:x.r, dur:Math.min(elapsed(), dur()), h:Date.now(), fila:[...d.fila], entrou:d.entrou ?? null, streak:d.streak || null,
+      esc:[lineup(d,a),lineup(d,b)], ev:(live.ev||[]).map(e => ({s:e.s, g:e.g||null, a:e.a||null})), comp:Object.values(d.subs||{}) };
+    d.jogos.push(j);
+    let tri = false;
+    if (x.r === 'e'){ d.fila = [p, r, proE, proE === a ? b : a]; d.entrou = null; d.streak = null; }   // entram pró e ré juntos
+    else {
+      const W = x.r === 'a' ? a : b, L = x.r === 'a' ? b : a;
+      const n = (d.streak && d.streak.t === W ? d.streak.n : 0) + 1;
+      if (n >= 3){ // 3 vitórias seguidas: o vencedor sai e vai para ré; o perdedor (levou 3 gols / perdeu) também sai
+        d.fila = [p, r, L, W]; d.entrou = null; d.streak = null; tri = true;
+      } else {
+        d.fila = x.r === 'a' ? [a,p,r,b] : [p,b,r,a];   // vencedor continua com o mesmo colete
+        d.entrou = p; d.streak = { t:W, n };
+      }
+    }
+    d.subs = {}; closeModal();
+    live = {...LIVE0(), date:ui.date}; saveLive(); keepAwake(false);
+    saveDay(ui.date); render(); window.scrollTo(0,0);
+    toast(tri ? `${tname(d.fila[3])} venceu 3 seguidas — sai e vai para ré. Entram ${tname(p)} e ${tname(r)}` : x.r === 'e' ? 'Empate — entram ' + tname(p) + ' e ' + tname(r) : 'Próximo: ' + tname(d.fila[0]) + ' × ' + tname(d.fila[1]));
+  },
+  undo: async () => { const d = S.days[ui.date]; if (!(await ask('Desfazer o último jogo registrado?', 'Desfazer'))) return;
+    const j = d.jogos.pop(); d.fila = j.fila; d.entrou = j.entrou ?? null; d.streak = j.streak || null; saveDay(ui.date); render(); },
+  swapq: () => { const d = S.days[ui.date]; [d.fila[2], d.fila[3]] = [d.fila[3], d.fila[2]]; saveDay(ui.date); render(); },
+  editq: () => {
+    const d = S.days[ui.date]; const lab = ['Em campo — colete amarelo','Em campo — colete azul','Pró','Ré'];
+    modal(`<h3>Ajustar fila</h3>${lab.map((l,i) => `<label class="f">${l}<select id="q${i}">${[0,1,2,3].map(t => `<option value="${t}" ${d.fila[i]===t?'selected':''}>${esc(tname(t))}</option>`).join('')}</select></label>`).join('')}
+      <div class="btns" style="justify-content:flex-end"><button class="btn" data-a="mclose">Cancelar</button><button class="btn pri" data-a="saveq">Salvar</button></div>`);
+  },
+  ordem: x => { const t = +x.t; ui.ordem = ui.ordem || []; const k = ui.ordem.indexOf(t);
+    if (k >= 0) ui.ordem.splice(k,1); else ui.ordem.push(t); render(); },
+  ordemclr: () => { ui.ordem = []; render(); },
+  ordemaus: () => { const d = S.days[ui.date];
+    const na = t => (d.times[t]||[]).filter(id => (d.aus||{})[id]).length + vagasOf(d,t).length;
+    const o = [0,1,2,3].sort((x,y) => na(x) - na(y)); ui.ordem = o;
+    const tie = [0,1,2].some(i => na(o[i]) === na(o[i+1]));
+    render(); if (tie) toast('Há times empatados em ausentes — decidam no par ou ímpar e ajuste a ordem'); },
+  ordemmarcar: () => { const d = S.days[ui.date];
+    modal(`<h3>Quem não chegou?</h3><p class="sm mu">Toque para marcar/desmarcar.</p><div class="cand">${d.times.flatMap((tt,ti) => tt.map(id => `<button data-a="toggleaus" data-id="${id}" style="${(d.aus||{})[id]?'outline:2px solid var(--warn)':''}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span>${esc(pname(id))}<small>${esc(tname(ti))}${(d.aus||{})[id] ? ' · ausente' : ''}</small></button>`)).join('')}</div><button class="btn pri" data-a="mclose">Pronto</button>`); },
+  toggleaus: x => { const d = S.days[ui.date]; d.aus ||= {}; if (d.aus[x.id]) delete d.aus[x.id]; else d.aus[x.id] = true; saveDay(ui.date); render(); A.ordemmarcar(); },
+  ordemok: () => { const o = [...(ui.ordem||[])]; if (o.length < 3) return;
+    [0,1,2,3].forEach(t => { if (!o.includes(t)) o.push(t); });
+    const d = S.days[ui.date]; d.fila = o; d.filaOk = true; d.entrou = null; d.streak = null; ui.ordem = [];
+    saveDay(ui.date); render(); window.scrollTo(0,0); },
+  slot: x => slotModal(S.days[ui.date], x.id, +x.t),
+  vaga: x => vagaModal(S.days[ui.date], x.k, +x.t, x.p ? +x.p : null),
+  setaus: x => { const d = S.days[ui.date]; (d.aus ||= {})[x.id] = true; saveDay(ui.date); render();
+    const t = d.times.findIndex(tt => tt.includes(x.id)); slotModal(d, x.id, t); },
+  unaus: x => { const d = S.days[ui.date]; if (d.aus) delete d.aus[x.id]; if (d.subs) delete d.subs[x.id]; saveDay(ui.date); closeModal(); render(); },
+  setsub: x => { const d = S.days[ui.date]; d.subs ||= {}; if (x.s) d.subs[x.id] = x.s; else delete d.subs[x.id]; saveDay(ui.date); closeModal(); render(); },
+  saveq: () => { const f = [0,1,2,3].map(i => +$('#q'+i).value);
+    if (new Set(f).size !== 4){ toast('Cada time só pode aparecer uma vez'); return; }
+    S.days[ui.date].fila = f; S.days[ui.date].filaOk = true; saveDay(ui.date); closeModal(); render(); },
+
+  quitar: x => modal(`<h3>Quitar ${esc(pname(x.id))}</h3><p class="sm mu">${x.d ? (x.d.length === 7 ? 'Mensalidade de ' + fmonth(x.d) : fdate(x.d)) : 'Todas as pendências'} — como pagou?</p>
+    <div class="grid2"><button class="btn pri" data-a="quitarok" data-id="${x.id}" data-d="${x.d||''}" data-f="pix">Pix</button><button class="btn" style="background:#6b4a12;border-color:#6b4a12" data-a="quitarok" data-id="${x.id}" data-d="${x.d||''}" data-f="balcao">Balcão</button></div>
+    <button class="btn" data-a="mclose">Cancelar</button>`),
+  quitartudo: x => A.quitar({id:x.id, d:''}),
+  quitarok: x => {
+    const dates = x.d ? [x.d] : (debts()[x.id]?.days || []).map(o => o.date);
+    dates.forEach(dt => {
+      if (dt.length === 7){ const M = S.meses[dt]; (M.pag ||= {})[x.id] = Number(M.valor)||0; (M.forma ||= {})[x.id] = x.f; save('meses/' + dt, M); return; }
+      const d = S.days[dt]; d.pag[x.id] = dueOf(d, x.id); (d.forma ||= {})[x.id] = x.f; saveDay(dt); });
+    closeModal(); render(); toast(x.f === 'balcao' ? 'Pago no balcão — confira o pix ao dono desse dia' : 'Pagamento registrado'); },
+  copycob: () => {
+    const dd = Object.entries(debts()).sort((a,b) => b[1].total - a[1].total);
+    let t = `⚽ *FUT TERÇA — pendências*\n\n`;
+    dd.forEach(([id,v]) => t += `• ${pname(id)}${/^Convidado .+/.test(S.players[id]?.classe||'') ? ' (' + S.players[id].classe.replace('Convidado','conv.') + ')' : ''}: ${brl(v.total)} (${v.days.map(o => o.mes ? 'mensal ' + fmonth(o.date).split(' ')[0] : fdate(o.date).split(' ')[1]).join(', ')})\n`);
+    t += `\nTotal em aberto: ${brl(dd.reduce((s,[,v]) => s + v.total, 0))}`; copyText(t);
+  },
+  addlg: () => {
+    const v = parseFloat(String($('#lgVal').value).replace(',', '.')); const desc = $('#lgDesc').value.trim();
+    if (!(v > 0) || !desc){ toast('Preencha descrição e valor'); return; }
+    const id = 'l' + Date.now().toString(36);
+    S.ledger[id] = { tipo:$('#lgTipo').value, data:$('#lgData').value || ymd(new Date()), desc, valor:v };
+    save('ledger/' + id, S.ledger[id]); render();
+  },
+  dellg: async x => { if (!(await ask('Excluir este lançamento?', 'Excluir', true))) return; delete S.ledger[x.id]; save('ledger/' + x.id, null); render(); },
+  goday: x => { ui.date = x.d; A.tab({k:'dia'}); },
+  copyrel: () => copyText(relText(ui.mes)),
+
+  addmode: x => { ui.addMode = x.m; render(); setTimeout(() => (x.m === 'lote' ? $('#bulk') : $('#newName'))?.focus(), 30); },
+  addp: () => { const n = $('#newName').value.trim(); if (!n) return; const id = uid();
+    const v = $('#newPot').value, gol = v === 'G';
+    S.players[id] = { nome:n, pote:gol ? 3 : +v, ativo:true, criado:ymd(new Date()), ...(gol ? {goleiro:true} : {}) }; savePlayer(id); render(); setTimeout(() => $('#newName')?.focus(), 30); },
+  ppot: x => { S.players[x.id].pote = +x.n; savePlayer(x.id); render(); },
+  pedit: x => { const p = S.players[x.id];
+    modal(`<h3>Editar jogador</h3><label class="f">Nome<input id="edName" value="${esc(p.nome)}"></label>
+      <label class="f" id="edPotL" style="${p.goleiro?'display:none':''}">Pote padrão<select id="edPot">${[1,2,3,4,5].map(n=>`<option ${n===p.pote?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="edAt" style="width:auto" ${p.ativo!==false?'checked':''}> Ativo (aparece na lista do dia)</label>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="edGol" style="width:auto" ${p.goleiro?'checked':''} data-c="edgol"> Goleiro (não paga e não entra no sorteio)</label>
+      <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="edMen" style="width:auto" ${p.mensalista?'checked':''}> Mensalista (entra na lista de mensalistas dos próximos meses)</label>
+      <div class="btns" style="justify-content:space-between"><button class="btn bad" data-a="pdel" data-id="${x.id}">Excluir</button><span class="btns"><button class="btn" data-a="mclose">Cancelar</button><button class="btn pri" data-a="psave" data-id="${x.id}">Salvar</button></span></div>`); },
+  psave: x => { const p = S.players[x.id]; const n = $('#edName').value.trim(); if (n) p.nome = n;
+    p.pote = +$('#edPot').value; p.ativo = $('#edAt').checked; p.goleiro = $('#edGol').checked; p.mensalista = $('#edMen').checked; savePlayer(x.id); closeModal(); render(); },
+  pdel: async x => {
+    const used = Object.values(S.days).some(d => (d.presentes||[]).includes(x.id));
+    if (used){ S.players[x.id].ativo = false; savePlayer(x.id); closeModal(); render(); toast('Tem histórico — foi desativado em vez de excluído'); return; }
+    closeModal(); if (!(await ask(`Excluir ${esc(pname(x.id))}?`, 'Excluir', true))) return;
+    delete S.players[x.id]; save('players/' + x.id, null); render();
+  },
+  bulk: () => {
+    const lines = $('#bulk').value.split('\n').map(s => s.trim()).filter(Boolean); let k = 0;
+    lines.forEach(l => { const [n, p] = l.split(/[;,\t]/).map(s => s.trim()); if (!n) return;
+      const gol = /^g/i.test(p || '');
+      const id = uid() + k++; S.players[id] = { nome:n, pote:gol ? 3 : Math.min(5, Math.max(1, +p || 3)), ativo:true, criado:ymd(new Date()), ...(gol ? {goleiro:true} : {}) }; savePlayer(id); });
+    toast(`${k} jogador(es) adicionados`); render();
+  },
+  savecfg: () => {
+    const num = (id, def) => { const v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) && v >= 0 ? v : def; };
+    S.config = { ...S.config, valorHora:num('#cfH',180), horas:num('#cfHs',2), valorJogador:num('#cfV',25), valorMensal:num('#cfMen',100), minutos:Math.max(1,num('#cfM',8)), gols:Math.max(1,num('#cfG',3)) };
+    save('fut/config', S.config); toast('Ajustes salvos'); render();
+  },
+  backup: () => copyText(JSON.stringify({ v:1, config:S.config, players:S.players, days:S.days, ledger:S.ledger, meses:S.meses })),
+  import: () => modal(`<h3>Restaurar backup</h3><p class="sm mu">Cole o texto do backup. Registros com o mesmo identificador serão substituídos.</p><textarea id="impTx" rows="10"></textarea><div class="btns" style="justify-content:flex-end"><button class="btn" data-a="mclose">Cancelar</button><button class="btn pri" data-a="doimport">Restaurar</button></div>`),
+  doimport: () => {
+    let o; try { o = JSON.parse($('#impTx').value); } catch(e){ toast('Texto inválido'); return; }
+    if (o.config){ S.config = {...DEF, ...o.config}; save('fut/config', S.config); }
+    for (const k of ['players','days','ledger','meses']) Object.entries(o[k] || {}).forEach(([id,v]) => { S[k][id] = v; save(k + '/' + id, v); });
+    closeModal(); toast('Backup restaurado'); render();
+  }
+};
+const C = {
+  dayval: el => { const d = S.days[ui.date]; d.valor = parseFloat(el.value) || 0; saveDay(ui.date); render(); },
+  daycost: el => { const d = S.days[ui.date]; d.custo = parseFloat(el.value) || 0; saveDay(ui.date); render(); },
+  mesM: el => { if (el.value){ ui.mesM = el.value; render(); } },
+  mValor: el => { const m = $('[data-c=mesM]').value, M = mesDraft(m); M.valor = parseFloat(el.value) || 0; if (S.meses[m]) save('meses/' + m, M); render(); },
+  edgol: el => { const l = document.getElementById('edPotL'); if (l) l.style.display = el.checked ? 'none' : ''; },
+  mes: el => { if (el.value){ ui.mes = el.value; render(); } }
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const f = A[b.dataset.a]; if (f){ e.preventDefault(); f(b.dataset, b); } });
+document.addEventListener('input', e => {
+  if (e.target.id !== 'filtro') return;
+  ui.filtro = e.target.value;
+  applyFiltro();
+});
+function applyFiltro(){
+  document.querySelectorAll('#view .prow[data-nm]').forEach(r => { r.hidden = !matchNm(r.dataset.nm, ui.filtro); });
+  document.querySelectorAll('#view .plist').forEach(l => { if (!l.querySelector('.prow[data-nm]')) return;
+    const vis = l.querySelector('.prow[data-nm]:not([hidden])'); const sec = l.previousElementSibling;
+    if (sec && sec.classList.contains('sect')) sec.hidden = !vis; l.hidden = !vis; });
+}
+document.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (el && C[el.dataset.c]) C[el.dataset.c](el); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (e.target.id === 'newName') A.addp(); else if (e.target.id === 'quickAdd') A.quickadd();
+});
+$('#dateIn').addEventListener('change', e => { if (e.target.value){ ui.date = e.target.value; ui.calMes = null; ui.sel = null; render(); } });
+window.addEventListener('hashchange', () => { const k = location.hash.slice(1); if (k !== ui.tab && TABS.some(t => t[0] === k)){ ui.tab = k; render(); } });
+
+render();
+init();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
