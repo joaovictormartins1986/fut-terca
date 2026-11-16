@@ -136,6 +136,9 @@ nav button.on{color:var(--ac)}
 .qlist{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .qlist .slot{background:var(--s3);color:var(--tx)}
 .qlist .slot.aus{background:transparent;border:1px dashed var(--line)}
+.slotw{display:flex;gap:4px;align-items:stretch;width:100%}
+.slotw .slot{flex:1;min-width:0}
+.sx{flex:none;width:34px;border-radius:9px;background:rgba(0,0,0,.22);color:inherit;font-weight:800;font-size:15px;display:grid;place-items:center;border:0;cursor:pointer}
 .cand{display:flex;flex-direction:column;gap:6px}
 .cand button{display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;background:var(--s2);text-align:left;font-weight:600}
 .evb{font-size:12px;margin-left:2px}
@@ -257,6 +260,8 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
   .side .roster .slot{width:auto;min-height:0;padding:3px 6px;font-size:12px;gap:4px}
   .side .roster .slot small{display:inline;margin-left:3px}
   .side .roster .slot .pb{width:15px;height:15px;font-size:10px}
+  .side .roster .slotw{width:auto}
+  .side .roster .sx{width:24px;font-size:12px;border-radius:7px}
   .mid{min-width:130px;gap:6px}
   .clock{font-size:66px}
   .ctrl .btn{padding:8px 12px;font-size:14px}
@@ -614,7 +619,7 @@ function vDia(){
     const on = pres.has(id), pt = potOf(d,id);
     return `<div class="prow inl ${on?'':'off'}" data-nm="${esc(norm(p.nome))}" ${ui.filtro && !matchNm(p.nome, ui.filtro) ? 'hidden' : ''}>
       <button class="chk" data-a="pres" data-id="${id}" aria-label="Presença">✓</button>
-      <span class="nm">${esc(p.nome)}${isMensal(ui.date, id) ? ' <span class="mtag">M</span>' : ''}</span>
+      <span class="nm">${esc(p.nome)}${isMensal(ui.date, id) ? ' <span class="mtag">M</span>' : ''}${(d?.saiuJ||{})[id] ? ` <small style="color:var(--warn);font-weight:600">saiu no jogo ${d.saiuJ[id]}</small>` : ''}</span>
       ${isGol(id) ? `<span class="chip" style="margin-left:auto">🧤 Goleiro</span>` : `<div class="potsro">${[1,2,3,4,5].map(n => `<span class="${n===pt ? 'pb p'+n : 'po'}">${n}</span>`).join('')}</div>`}
     </div>`;
   };
@@ -766,14 +771,15 @@ function vagaModal(d, key, t, pt){
 function slotModal(d, id, t){
   const field = (d.filaOk || d.jogos.length) && (d.fila[0] === t || d.fila[1] === t);
   const aus = (d.aus||{})[id], sb = (d.subs||{})[id], pt = potOf(d,id);
-  let h = `<h3>${esc(pname(id))} <span class="pb p${pt}">${pt}</span></h3><p class="sm mu">${esc(tname(t))}</p>`;
+  const sj = (d.saiuJ||{})[id];
+  let h = `<h3>${esc(pname(id))} <span class="pb p${pt}">${pt}</span></h3><p class="sm mu">${esc(tname(t))}${sj ? ' · saiu no jogo ' + sj : ''}</p>`;
   if (!aus){
-    h += `<button class="btn blk" data-a="setaus" data-id="${id}">Não chegou / faltou</button>`;
+    h += `<button class="btn blk" data-a="${d.jogos.length || field ? 'saiuj' : 'setaus'}" data-id="${id}" data-t="${t}">${d.jogos.length || field ? 'Saiu do jogo (lesão, foi embora…)' : 'Não chegou / faltou'}</button>`;
   } else {
     if (field){
       h += candList(d, id, pt);
     } else h += `<p class="sm mu">O substituto é escolhido quando o time entrar em campo.</p>`;
-    h += `<button class="btn pri blk" data-a="unaus" data-id="${id}">${esc(pname(id).split(' ')[0])} chegou</button>`;
+    h += `<button class="btn pri blk" data-a="unaus" data-id="${id}">${esc(pname(id).split(' ')[0])} ${sj ? 'voltou' : 'chegou'}</button>`;
   }
   h += `<button class="btn" data-a="mclose">Fechar</button>`;
   modal(h);
@@ -817,16 +823,17 @@ function vJogo(){
     return items.map(it => {
       if (it.vaga){
         const v = it.vaga, sb = subs[v.key], pl = v.pot ? `<span class="pb p${v.pot}">${v.pot}</span>` : '<span class="pb" style="background:var(--mu)">?</span>';
-        if (field && sb) return `<button class="slot sub" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>completando a vaga${v.pot ? ' do pote ' + v.pot : ''}</small></span></button>`;
+        if (field && sb) return `<span class="slotw"><button class="slot sub" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>completando a vaga${v.pot ? ' do pote ' + v.pot : ''}</small></span></button><button class="sx" data-a="subsaiu" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}" title="Saiu do jogo">✕</button></span>`;
         if (field) return `<button class="slot vaga" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}">${pl}<span>＋ Completar<small>vaga${v.pot ? ' do pote ' + v.pot : ''}</small></span></button>`;
         return `<button class="slot aus" style="text-decoration:none" data-a="vaga" data-k="${v.key}" data-t="${t}" data-p="${v.pot||''}">${pl}Vaga${v.pot ? ' — pote ' + v.pot : ''}</button>`;
       }
       const id = it.id, pt = it.pot;
       const emp = !field && Object.keys(subs).find(k => subs[k] === id && (k[0] === 'v' || aus[k]));
-      if (!aus[id]) return `<button class="slot" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>${esc(pname(id))}${field ? evb(id) : ''}${emp ? `<small>completando o ${esc(tname(keyTeam(emp)))}</small>` : ''}</span></button>`;
+      if (!aus[id]){ const bt = `<button class="slot" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>${esc(pname(id))}${field ? evb(id) : ''}${emp ? `<small>completando o ${esc(tname(keyTeam(emp)))}</small>` : ''}</span></button>`;
+        return field ? `<span class="slotw">${bt}<button class="sx" data-a="saiuj" data-id="${id}" data-t="${t}" title="Saiu do jogo">✕</button></span>` : bt; }
       if (!field) return `<button class="slot aus" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span>${esc(pname(id))} (ausente)</button>`;
       const sb = subs[id];
-      if (sb) return `<button class="slot sub" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>no lugar de ${esc(pname(id))}</small></span></button>`;
+      if (sb) return `<span class="slotw"><button class="slot sub" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${potOf(d,sb)}">${potOf(d,sb)}</span><span>${esc(pname(sb))}${evb(sb)}<small>no lugar de ${esc(pname(id))}</small></span></button><button class="sx" data-a="subsaiu" data-k="${id}" data-t="${t}" title="Saiu do jogo">✕</button></span>`;
       return `<button class="slot vaga" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>＋ Completar<small>${esc(pname(id))} ausente</small></span></button>`;
     }).join('');
   };
@@ -1302,7 +1309,15 @@ const A = {
   vaga: x => vagaModal(S.days[ui.date], x.k, +x.t, x.p ? +x.p : null),
   setaus: x => { const d = S.days[ui.date]; (d.aus ||= {})[x.id] = true; saveDay(ui.date); render();
     const t = d.times.findIndex(tt => tt.includes(x.id)); slotModal(d, x.id, t); },
-  unaus: x => { const d = S.days[ui.date]; if (d.aus) delete d.aus[x.id]; if (d.subs) delete d.subs[x.id]; saveDay(ui.date); closeModal(); render(); },
+  unaus: x => { const d = S.days[ui.date]; if (d.aus) delete d.aus[x.id]; if (d.subs) delete d.subs[x.id]; if (d.saiuJ) delete d.saiuJ[x.id]; saveDay(ui.date); closeModal(); render(); },
+  // saiu durante o jogo: fica ausente (continua pagando) e já abre a escolha de quem completa
+  saiuj: x => { const d = S.days[ui.date]; (d.aus ||= {})[x.id] = true; (d.saiuJ ||= {})[x.id] = d.jogos.length + 1;
+    saveDay(ui.date); render(); toast(`${pname(x.id)} saiu — escolha quem completa`);
+    const t = x.t !== undefined ? +x.t : d.times.findIndex(tt => tt.includes(x.id)); slotModal(d, x.id, t); },
+  // o substituto também saiu: libera a vaga e escolhe outro
+  subsaiu: x => { const d = S.days[ui.date]; const sb = (d.subs||{})[x.k]; if (d.subs) delete d.subs[x.k];
+    saveDay(ui.date); render(); if (sb) toast(`${pname(sb)} saiu — escolha outro`);
+    if (x.k[0] === 'v') vagaModal(d, x.k, +x.t, x.p ? +x.p : null); else slotModal(d, x.k, +x.t); },
   setsub: x => { const d = S.days[ui.date]; d.subs ||= {}; if (x.s) d.subs[x.id] = x.s; else delete d.subs[x.id]; saveDay(ui.date); closeModal(); render(); },
   saveq: () => { const f = [0,1,2,3].map(i => +$('#q'+i).value);
     if (new Set(f).size !== 4){ toast('Cada time só pode aparecer uma vez'); return; }
