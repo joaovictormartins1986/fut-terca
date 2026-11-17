@@ -598,7 +598,7 @@ function render(){
   const banner = ui.mode === 'local' ? `<div class="banner">Sem conexão com o servidor. Verifique a internet.</div>` : '';
   $('#view').className = ui.tab === 'jogo' ? 'wide' : '';
   $('#view').innerHTML = banner + v();
-  if (ui.tab === 'dia' && ui.filtro) applyFiltro();
+  if ((ui.tab === 'dia' && ui.filtro) || (ui.tab === 'cadastro' && ui.filtroCad)) applyFiltro();
   tick();
 }
 
@@ -1101,7 +1101,8 @@ function vCad(){
       <p class="sm mu">Um por linha: <b>nome;pote</b>. Use <b>G</b> no lugar do pote para goleiro. Sem pote, entra no 3.</p>
       <button class="btn pri" data-a="bulk">Adicionar todos</button></div>`
     : `<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"><input id="newName" placeholder="Nome do jogador" style="flex:1 1 100%"><select id="newPot" style="flex:1">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===3?'selected':''}>Pote ${n}</option>`).join('')}<option value="G">🧤 Goleiro</option></select><button class="btn pri" data-a="addp">Adicionar</button></div>`}
-    ${(() => { const crow = ([id,p]) => `<div class="prow ${p.ativo===false?'off':''}">
+    <div class="filtro"><input id="filtroCad" type="search" placeholder="🔍 Filtrar por nome…" value="${esc(ui.filtroCad||'')}" autocomplete="off"></div>
+    ${(() => { const crow = ([id,p]) => `<div class="prow ${p.ativo===false?'off':''}" data-nm="${esc(norm(p.nome))}">
       <span class="nm">${esc(p.nome)}${p.mensalista ? ' <span class="mtag">M</span>' : ''}</span>
       ${p.goleiro ? '<span class="chip">🧤 Goleiro</span>' : `<div class="pots">${[1,2,3,4,5].map(n => `<button class="pot p${n} ${n===p.pote?'sel':''}" data-a="ppot" data-id="${id}" data-n="${n}">${n}</button>`).join('')}</div>`}
       <button class="btn sm" data-a="pedit" data-id="${id}">Editar</button></div>`;
@@ -1401,12 +1402,14 @@ const C = {
 };
 document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const f = A[b.dataset.a]; if (f){ e.preventDefault(); f(b.dataset, b); } });
 document.addEventListener('input', e => {
+  if (e.target.id === 'filtroCad'){ ui.filtroCad = e.target.value; applyFiltro(); return; }
   if (e.target.id !== 'filtro') return;
   ui.filtro = e.target.value;
   applyFiltro();
 });
 function applyFiltro(){
-  document.querySelectorAll('#view .prow[data-nm]').forEach(r => { r.hidden = !matchNm(r.dataset.nm, ui.filtro); });
+  const q = ui.tab === 'cadastro' ? ui.filtroCad : ui.filtro;
+  document.querySelectorAll('#view .prow[data-nm]').forEach(r => { r.hidden = !matchNm(r.dataset.nm, q); });
   document.querySelectorAll('#view .plist').forEach(l => { if (!l.querySelector('.prow[data-nm]')) return;
     const vis = l.querySelector('.prow[data-nm]:not([hidden])'); const sec = l.previousElementSibling;
     if (sec && sec.classList.contains('sect')) sec.hidden = !vis; l.hidden = !vis; });
