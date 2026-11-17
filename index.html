@@ -703,7 +703,8 @@ function vTimes(d){
     <p class="sm mu" style="margin-bottom:10px">Toque em um jogador e depois em outro para trocá-los de time.</p>
     ${out.length ? `<div style="margin-bottom:10px"><div class="sm mu" style="margin-bottom:6px">Sem time (chegaram depois do sorteio) — toque e escolha “+ aqui”:</div><div class="chips">${out.map(id => `<button class="chip ${ui.sel && ui.sel.pid===id?'sel':''}" data-a="pickout" data-id="${id}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span>${esc(pname(id))}</button>`).join('')}</div></div>` : ''}
     <div class="teams">${teams}</div>
-    <button class="btn pri blk" style="margin-top:12px" data-a="tab" data-k="jogo">Ir para o painel do jogo →</button>
+    <button class="btn blk" style="margin-top:12px" data-a="copytimes">📋 Copiar times para o WhatsApp</button>
+    <button class="btn pri blk" style="margin-top:8px" data-a="tab" data-k="jogo">Ir para o painel do jogo →</button>
   </div>`;
 }
 
@@ -1349,6 +1350,13 @@ const A = {
   },
   dellg: async x => { if (!(await ask('Excluir este lançamento?', 'Excluir', true))) return; delete S.ledger[x.id]; save('ledger/' + x.id, null); render(); },
   goday: x => { ui.date = x.d; A.tab({k:'dia'}); },
+  copytimes: () => { const d = S.days[ui.date]; if (!d || !d.times) return;
+    let t = `⚽ *FUT TERÇA — ${fdate(ui.date)}*\n`;
+    d.times.forEach((tm, ti) => { t += `\n*${tname(ti).toUpperCase()}*\n` + tm.slice().sort((a,b) => potOf(d,a) - potOf(d,b)).map(id => pname(id)).join('\n') + '\n'; });
+    const inT = new Set(d.times.flat()), out = d.presentes.filter(id => !inT.has(id) && !isGol(id)), gols = d.presentes.filter(isGol);
+    if (out.length) t += `\n*Sem time:* ${out.map(pname).join(', ')}\n`;
+    if (gols.length) t += `\n🧤 *Goleiros:* ${gols.map(pname).join(', ')}\n`;
+    copyText(t.trim()); },
   copyrel: () => copyText(relText(ui.mes)),
 
   addmode: x => { ui.addMode = x.m; render(); setTimeout(() => (x.m === 'lote' ? $('#bulk') : $('#newName'))?.focus(), 30); },
