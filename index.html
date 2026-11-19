@@ -74,7 +74,7 @@ nav button.on{color:var(--ac)}
 .pot.sel.p1{background:var(--p1)}.pot.sel.p2{background:var(--p2)}.pot.sel.p3{background:var(--p3)}.pot.sel.p4{background:var(--p4)}.pot.sel.p5{background:var(--p5)}
 .pay{flex:none;min-width:58px;padding:7px 8px;border-radius:8px;font-size:12.5px;font-weight:700;border:1px solid var(--warn);color:var(--warn)}
 .pay.ok{background:var(--ac2);border-color:var(--ac2);color:#dfffee}
-.pay.ok.bal{background:#6b4a12;border-color:#6b4a12;color:#ffe2a8}
+.pay.ok{width:120px}
 .pays{display:flex;gap:4px;flex:none}
 .fech{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14.5px;align-items:center}
 .fech .v{font-family:"Barlow Condensed";font-size:21px;font-weight:700;text-align:right}
@@ -237,6 +237,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
   .prow .nm{flex:1 1 calc(100% - 44px)}
   .prow .pots{margin-left:0}
   .prow .pay{min-width:52px;padding:7px 6px}
+  .prow .pay.ok{width:108px}
   .prow .pays{margin-left:auto}
   .prow.inl{flex-wrap:nowrap}
   .prow.inl .nm{flex:1 1 auto}
@@ -268,6 +269,36 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
   .result .btn{padding:10px 6px;font-size:14px}
   .rulehint{display:none}
 }
+.mbox .plist{display:flex!important;flex-direction:column;gap:6px}
+.mbox .prow .nm{flex:1;min-width:0}
+/* quinta: cronômetro em destaque com botões ao lado, TIME 1 X TIME 2, sem botões de resultado */
+.side .gb button.plus{width:52px}
+.clockbox{background:var(--s2);border:2px solid var(--line);border-radius:20px;padding:12px 16px;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 28px;margin-bottom:12px}
+.clockbox .clock{font-size:clamp(100px,16vw,180px);width:auto;line-height:.95}
+.clockbox .ctrl{flex-direction:column;gap:10px}
+.clockbox .ctrl .btn{white-space:nowrap;padding:18px 26px;font-size:22px;min-width:190px;border-radius:14px}
+.clockbox .cmsg{flex-basis:100%;display:flex;justify-content:center}
+.board.vsb{grid-template-columns:1fr auto 1fr;gap:10px}
+.resdone .btn.nxt{white-space:nowrap;font-family:"Barlow Condensed";font-weight:800;font-size:30px;letter-spacing:.5px;text-transform:uppercase;padding:8px 22px;line-height:1.1}
+.vs{align-self:center;font-family:"Barlow Condensed";font-weight:800;font-size:72px;color:var(--mu);line-height:1}
+@media (min-width:760px){ .side .gb button.plus{width:64px} }
+@media (max-width:620px){
+  .board.vsb{grid-template-columns:1fr auto 1fr;gap:6px} .vs{font-size:40px}
+  .resdone .btns{width:100%} .resdone .btn.nxt{width:100%;font-size:26px}
+  .clockbox{padding:10px;gap:8px 14px}
+  .clockbox .clock{font-size:clamp(64px,21vw,96px)}
+  .clockbox .ctrl{gap:8px} .clockbox .ctrl .btn{padding:14px 12px;font-size:17px;min-width:0;width:120px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .side .gb button.plus{width:44px}
+  .clockbox{padding:4px 10px;gap:8px 16px;margin-bottom:8px;flex-wrap:nowrap}
+  .clockbox .clock{font-size:58px} .clockbox .ctrl{flex-direction:row} .clockbox .ctrl .btn{padding:10px 16px;font-size:15px;min-width:0} .vs{font-size:36px}
+}
+/* caixa alta em botões, títulos e subtítulos */
+.btn,.pay,.seg button,nav button,.card h2,.mbox h3,.sect,.ql,.stat .l,.th,.tn{text-transform:uppercase}
+.btn,.pay,.seg button{letter-spacing:.3px}
+.pays .pay{width:70px;min-width:0;padding-left:4px;padding-right:4px}.pays .pay.ok{width:144px}
+@media (max-width:620px){ .pays .pay{width:66px} .pays .pay.ok{width:136px} }
 </style>
 </head>
 <body>
@@ -539,6 +570,8 @@ function whistle(){
   try { navigator.vibrate && navigator.vibrate([600,200,600,200,900]); } catch(e){}
   const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
 }
+// apito de início: um apito longo e alto
+function startWhistle(){ tone(2300, 0, 1.1, .6, 'square'); tone(2750, 0, 1.1, .3, 'sawtooth'); try { navigator.vibrate && navigator.vibrate(700); } catch(e){} }
 const shortBeep = () => { tone(1500, 0, .18, .4); tone(1500, .28, .18, .4); };
 async function keepAwake(on){
   try { if (on && 'wakeLock' in navigator && !wake){ wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => wake = null); }
@@ -597,7 +630,7 @@ function render(){
   const v = { dia:vDia, sorteio:vSorteio, jogo:vJogo, caixa:vCaixa, relatorios:vRel, cadastro:vCad }[ui.tab];
   const banner = ui.mode === 'local' ? `<div class="banner">Sem conexão com o servidor. Verifique a internet.</div>` : '';
   $('#view').className = ui.tab === 'jogo' ? 'wide' : '';
-  $('#view').innerHTML = banner + v();
+  $('#view').innerHTML = banner + lockBanner() + v();
   if ((ui.tab === 'dia' && ui.filtro) || (ui.tab === 'cadastro' && ui.filtroCad)) applyFiltro();
   tick();
 }
@@ -849,26 +882,24 @@ function vJogo(){
   return `<div class="jgrid"><div class="jmain">
   <div class="card">
     <h2>Jogo ${d.jogos.length + 1} ${d.streak && d.streak.n >= 1 && (d.streak.t === a || d.streak.t === b) ? `<span class="chip" style="font-family:Inter;text-transform:none;${d.streak.n >= 2 ? 'background:#5a3d0c;color:#ffd99a' : ''}">${esc(tname(d.streak.t))}: ${d.streak.n} vitória${d.streak.n>1?'s':''} seguida${d.streak.n>1?'s':''}${d.streak.n >= 2 ? ' — se vencer, sai para ré' : ''}</span>` : ''}<span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${S.config.minutos} min ou ${S.config.gols} gols</span></h2>
-    <div class="board">
-      ${side(a,0)}
-      <div class="mid">
-        <div class="clock num" id="clock">${fclock(remaining())}</div>
-        <div class="ctrl">
-          <button class="btn ${live.run?'':'pri'}" data-a="clock" ${live.done?'disabled':''}>${live.run ? '❚❚' : '▶'} ${st}</button>
-          <button class="btn" data-a="reset" title="Zerar">↺</button>
-        </div>
-        ${live.done ? `<div class="sm" style="color:var(--bad);font-weight:700">FIM — ${live.why==='gols' ? S.config.gols + ' gols' : 'tempo esgotado'}</div>` : ''}
+    <div class="clockbox">
+      <div class="clock num" id="clock">${fclock(remaining())}</div>
+      <div class="ctrl">
+        <button class="btn ${live.run?'':'pri'}" data-a="clock" ${live.done?'disabled':''}>${live.run ? '❚❚' : '▶'} ${st}</button>
+        <button class="btn" data-a="reset" title="Zerar">↺ Zerar</button>
+        <button class="btn bad" data-a="encerrar" ${live.done || (!live.run && live.acc === 0) ? 'disabled' : ''}>■ Encerrar</button>
       </div>
-      ${side(b,1)}
-      ${live.done && !ui.pickRes ? `<div class="resdone" style="background:${sug==='e' ? 'var(--s3)' : COLETE[sug==='a'?0:1].c};color:${sug==='e' ? 'var(--tx)' : COLETE[sug==='a'?0:1].t}">
-        <div class="rt">${sug==='e' ? 'Empate' : 'Vitória do ' + esc(tname(sug==='a'?a:b))} <span class="num">${live.g[0]} × ${live.g[1]}</span></div>
-        <div class="btns"><button class="btn pri" data-a="res" data-r="${sug}">Confirmar e ir para o próximo jogo →</button><button class="btn" data-a="pickres">Corrigir</button></div>
-      </div>` : `<div class="result">
-      <button class="btn ${sug==='a'?'sug':''}" style="background:${COLETE[0].c};color:${COLETE[0].t};border:0" data-a="res" data-r="a">Venceu ${esc(tname(a))}</button>
-      <button class="btn ${sug==='e'?'sug':''}" data-a="res" data-r="e">Empate</button>
-      <button class="btn ${sug==='b'?'sug':''}" style="background:${COLETE[1].c};color:${COLETE[1].t};border:0" data-a="res" data-r="b">Venceu ${esc(tname(b))}</button>
-    </div>`}
+      ${live.done ? `<div class="cmsg sm" style="color:var(--bad);font-weight:700">FIM — ${live.why==='gols' ? S.config.gols + ' gols' : live.why==='enc' ? 'jogo encerrado' : 'tempo esgotado'}</div>` : ''}
     </div>
+    <div class="board vsb">
+      ${side(a,0)}
+      <div class="vs">X</div>
+      ${side(b,1)}
+    </div>
+    ${live.done ? `<div class="resdone" style="margin-top:10px;background:${sug==='e' ? 'var(--s3)' : COLETE[sug==='a'?0:1].c};color:${sug==='e' ? 'var(--tx)' : COLETE[sug==='a'?0:1].t}">
+        <div class="rt">${sug==='e' ? 'Empate' : 'Vitória do ' + esc(tname(sug==='a'?a:b))} <span class="num">${live.g[0]} × ${live.g[1]}</span></div>
+        <div class="btns"><button class="btn pri nxt" data-a="res" data-r="${sug}">PRÓXIMO JOGO →</button></div>
+      </div>` : ''}
     ${(live.ev||[]).length ? `<div class="evlist">${live.ev.map((e,i) => `<button class="chip" data-a="gedit" data-i="${i}"><i class="dot" style="background:${COLETE[e.s].c}"></i>⚽ ${e.g ? (e.g==='contra' ? 'gol contra' : esc(pname(e.g))) : '<span style="color:var(--warn)">quem fez?</span>'}${e.a ? ` <span class="mu"><span class="abox">A</span> ${esc(pname(e.a))}</span>` : ''}</button>`).join('')}</div>` : ''}
     <p class="sm mu rulehint" style="margin-top:8px;text-align:center">Quem perde sai: o PRÓ entra e o RÉ vira PRÓ · Empate: saem os dois, quem entrou por último volta como PRÓ · 3 vitórias seguidas: o vencedor sai e vai para RÉ</p>
   </div></div><div class="jside">
@@ -882,9 +913,9 @@ function vJogo(){
   <div class="card">
     <h2>Jogos do dia ${d.jogos.length ? '<button class="sp btn sm" data-a="undo">Desfazer último</button>' : ''}</h2>
     ${d.jogos.length ? `<div class="potbar">${[0,1,2,3].map(t => `<span>${esc(tname(t))}: <b>${wins[t]}</b> vit.</span>`).join('')}</div>
-    <div class="hist">${d.jogos.map((j,i) => `<div><span class="mu" style="width:26px">#${i+1}</span><i class="dot" style="background:${COLETE[0].c}"></i><b>${esc(tname(j.a))}</b> <span class="num" style="font-size:18px">${j.ga} × ${j.gb}</span> <b>${esc(tname(j.b))}</b><i class="dot" style="background:${COLETE[1].c}"></i><span class="sp mu sm" style="margin-left:auto">${j.r==='e' ? 'empate' : 'venceu ' + esc(tname(j.r==='a'?j.a:j.b))} · ${fclock(j.dur)}</span>${(j.ev||[]).filter(e=>e.g).length ? `<span class="sm mu" style="flex-basis:100%;padding-left:34px">⚽ ${j.ev.filter(e=>e.g).map(e => (e.g==='contra' ? 'contra' : esc(pname(e.g).split(' ')[0])) + (e.a ? ' <span class="abox">A</span>' + esc(pname(e.a).split(' ')[0]) : '')).join(', ')}</span>` : ''}</div>`).join('')}</div>
+    <div class="hist">${d.jogos.map((j,i) => `<div><span class="mu" style="width:26px">#${i+1}</span><i class="dot" style="background:${COLETE[0].c}"></i><b>${esc(tname(j.a))}</b> <span class="num" style="font-size:18px">${j.ga} × ${j.gb}</span> <b>${esc(tname(j.b))}</b><i class="dot" style="background:${COLETE[1].c}"></i></div>`).join('')}</div>
     ${(() => { const st = goalStats([d]); const top = Object.entries(st.g).sort((x,y) => y[1]-x[1]).slice(0,5); const ta = Object.entries(st.a).sort((x,y) => y[1]-x[1]).slice(0,5);
-      return top.length || ta.length ? `<div class="grid2" style="margin-top:10px"><div><div class="sm mu" style="font-weight:700;margin-bottom:4px">⚽ ARTILHARIA DO DIA</div>${top.map(([id,n]) => `<div class="sm">${esc(pname(id))} — <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div><div><div class="sm mu" style="font-weight:700;margin-bottom:4px"><span class="abox">A</span> ASSISTÊNCIAS</div>${ta.map(([id,n]) => `<div class="sm">${esc(pname(id))} — <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div></div>` : ''; })()}`
+      return top.length || ta.length ? `<div class="grid2" style="margin-top:10px"><div><div class="sm mu" style="font-weight:700;margin-bottom:4px">ARTILHARIA DO DIA</div>${top.map(([id,n]) => `<div class="sm">${esc(pname(id))} ⚽ <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div><div><div class="sm mu" style="font-weight:700;margin-bottom:4px">ASSISTÊNCIAS</div>${ta.map(([id,n]) => `<div class="sm">${esc(pname(id))} <span class="abox">A</span> <b>${n}</b></div>`).join('') || '<div class="sm mu">—</div>'}</div></div>` : ''; })()}`
     : '<p class="mu sm">Nenhum jogo registrado ainda.</p>'}
   </div></div></div>`;
 }
@@ -967,7 +998,7 @@ function vMensCaixa(m){
         : `<button class="pay" data-a="mpay" data-m="${m}" data-id="${id}" data-f="pix">Pix</button><button class="pay" data-a="mpay" data-m="${m}" data-id="${id}" data-f="balcao">Balcão</button>`}</div></div>`; }).join('')}</div>
   </div>`;
 }
-function vCaixa(){
+function vCaixaBase(){
   const c = caixa(), dbt = debts();
   const dd = Object.entries(dbt).sort((x,y) => y[1].total - x[1].total);
   const totDev = dd.reduce((s,[,v]) => s + v.total, 0);
@@ -1231,7 +1262,7 @@ const A = {
   clock: () => {
     audio();
     if (live.run){ live.acc = elapsed(); live.run = false; keepAwake(false); }
-    else { live.start = Date.now(); live.run = true; live.date = ui.date; keepAwake(true); }
+    else { if (live.acc === 0) startWhistle(); live.start = Date.now(); live.run = true; live.date = ui.date; keepAwake(true); }
     saveLive(); render();
   },
   reset: async () => { ui.pickRes = false; if ((live.acc > 0 || live.run || live.g[0] || live.g[1]) && !(await ask('Zerar cronômetro e placar?', 'Zerar'))) return;
@@ -1252,6 +1283,11 @@ const A = {
     if (x.p && x.p !== 'contra') goalModal(+x.i, 'a'); else closeModal(); },
   gas: x => { const e = live.ev[+x.i]; if (!e) return; e.a = x.p || null; saveLive(); closeModal(); render(); },
   pickres: () => { ui.pickRes = true; render(); },
+  encerrar: async () => {
+    const d = S.days[ui.date], [ta, tb] = d.fila;
+    const ok = await ask(`<b>Encerrar a partida?</b><br><br>Esse comando encerra a partida antes do tempo. Os dados serão guardados e o jogo finalizado com o placar atual: <b>${esc(tname(ta))} ${live.g[0]} × ${live.g[1]} ${esc(tname(tb))}</b>.<br><br>Confirmar ação:`, 'Encerrar', true);
+    if (!ok) return;
+    live.acc = elapsed(); live.run = false; live.done = true; live.why = 'enc'; saveLive(); keepAwake(false); whistle(); render(); },
   res: async x => {
     ui.pickRes = false;
     const d = S.days[ui.date]; const [a,b,p,r] = d.fila;
@@ -1408,7 +1444,32 @@ const C = {
   edgol: el => { const l = document.getElementById('edPotL'); if (l) l.style.display = el.checked ? 'none' : ''; },
   mes: el => { if (el.value){ ui.mes = el.value; render(); } }
 };
-document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const f = A[b.dataset.a]; if (f){ e.preventDefault(); f(b.dataset, b); } });
+/* ---------- fechamento do dia: depois de fechado, o dia não pode mais ser alterado ---------- */
+const LOCK = new Set('solo allpres pres pot resetpotes revisado semjogo pay unpay donopago quickadd draw cleartimes swap pickout putin clock reset gol gedit gsc gas pickres encerrar res undo swapq editq ordem ordemclr ordemaus ordemmarcar toggleaus ordemok slot vaga setaus unaus saiuj subsaiu setsub saveq dayval daycost'.split(' '));
+const dayLocked = (date = ui.date) => !!(S.days[date] && S.days[date].fechado);
+function lockBanner(){
+  if (!dayLocked() || !['dia','sorteio','jogo','caixa'].includes(ui.tab)) return '';
+  const dt = new Date(S.days[ui.date].fechado.em);
+  return `<div class="banner" style="background:#12301f;border-color:#1f6b45;color:#bff3d6">🔒 <b>Dia fechado</b> em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)} às ${pad(dt.getHours())}:${pad(dt.getMinutes())}. Os dados estão gravados e não podem mais ser alterados.</div>`;
+}
+function vCaixa(){ return vCaixaBase() + vFecharDia(); }
+function vFecharDia(){
+  const d = S.days[ui.date]; if (!d || !(d.presentes||[]).length) return '';
+  if (d.fechado) return `<div class="card"><h2>Fechamento do dia <span class="sp chip" style="background:var(--ac2)">🔒 fechado</span></h2><p class="sm">${fdate(ui.date)} está fechado e gravado. Quem ficou devendo ainda pode ser quitado em <b>Pendências</b>.</p></div>`;
+  return `<div class="card"><h2>Fechar o dia</h2><p class="sm mu" style="margin-bottom:10px">Grava definitivamente a lista, os jogos e os pagamentos de ${fdate(ui.date)}. Depois disso, nada deste dia pode ser alterado.</p><button class="btn bad blk" style="font-size:17px;padding:14px" data-a="fechardia">🔒 Fechar o dia</button></div>`;
+}
+A.fechardia = async () => {
+  const d = S.days[ui.date]; if (!d || d.fechado) return;
+  const pend = (d.presentes || []).filter(id => dueOf(d, id) > 0 && !isPaid(d, id)).length;
+  const emJogo = live.date === ui.date && (live.run || (live.acc > 0 && !live.done));
+  const ok = await ask(`<b>⚠️ Fechar o dia ${fdate(ui.date)}?</b><br><br>Depois de fechado, <b>os dados deste dia ficam gravados no app e não podem mais ser modificados</b>: lista de presença, times, jogos, gols e pagamentos.${''}${pend ? `<br><br><b style="color:var(--warn)">${pend} jogador${pend > 1 ? 'es' : ''} ainda ${pend > 1 ? 'não pagaram' : 'não pagou'}</b> — fica${pend > 1 ? 'm' : ''} como pendência e pode${pend > 1 ? 'm' : ''} ser quitado${pend > 1 ? 's' : ''} depois em Pendências.` : ''}${emJogo ? '<br><br><b style="color:var(--warn)">Há um jogo em andamento que ainda não foi registrado — ele será descartado.</b>' : ''}<br><br>Confirmar ação:`, 'Fechar o dia', true);
+  if (!ok) return;
+  
+  d.fechado = { em: Date.now() };
+  if (live.date === ui.date){ live = {...LIVE0(), date:ui.date}; saveLive(); keepAwake(false); }
+  saveDay(ui.date); render(); window.scrollTo(0,0); toast('🔒 Dia fechado e gravado');
+};
+document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const f = A[b.dataset.a]; if (f){ e.preventDefault(); if (LOCK.has(b.dataset.a) && dayLocked()){ toast('🔒 Dia fechado — não pode mais ser alterado'); return; } f(b.dataset, b); } });
 document.addEventListener('input', e => {
   if (e.target.id === 'filtroCad'){ ui.filtroCad = e.target.value; applyFiltro(); return; }
   if (e.target.id !== 'filtro') return;
@@ -1422,7 +1483,7 @@ function applyFiltro(){
     const vis = l.querySelector('.prow[data-nm]:not([hidden])'); const sec = l.previousElementSibling;
     if (sec && sec.classList.contains('sect')) sec.hidden = !vis; l.hidden = !vis; });
 }
-document.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (el && C[el.dataset.c]) C[el.dataset.c](el); });
+document.addEventListener('change', e => { const el = e.target.closest('[data-c]'); if (el && C[el.dataset.c]){ if (LOCK.has(el.dataset.c) && dayLocked()){ toast('🔒 Dia fechado — não pode mais ser alterado'); render(); return; } C[el.dataset.c](el); } });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Enter') return;
   if (e.target.id === 'newName') A.addp(); else if (e.target.id === 'quickAdd') A.quickadd();
