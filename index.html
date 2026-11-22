@@ -299,6 +299,10 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
 .btn,.pay,.seg button{letter-spacing:.3px}
 .pays .pay{width:70px;min-width:0;padding-left:4px;padding-right:4px}.pays .pay.ok{width:144px}
 @media (max-width:620px){ .pays .pay{width:66px} .pays .pay.ok{width:136px} }
+.dghost{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-130%);background:var(--ac);color:#06140d;font-weight:800;padding:10px 16px;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.55);white-space:nowrap;font-size:16px}
+.dsrc{opacity:.35}
+.dtgt{outline:3px solid var(--ac)!important;outline-offset:2px}
+[data-dz]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 </style>
 </head>
 <body>
@@ -778,16 +782,16 @@ function candList(d, key, pt){
   const last = d.jogos[d.jogos.length - 1], prev = new Set((last && last.comp) || []);
   const nComp = {}; d.jogos.forEach(j => (j.comp||[]).forEach(x => nComp[x] = (nComp[x]||0) + 1));
   const btn = x => `<button data-a="setsub" data-id="${key}" data-s="${x}" style="${x===sb?'outline:2px solid var(--ac);':''}${prev.has(x)?'opacity:.55':''}"><span class="pb p${potOf(d,x)}">${potOf(d,x)}</span>${esc(pname(x))}<small>${esc(teamOf(x))}${prev.has(x) ? ' · completou no jogo anterior' : nComp[x] ? ` · completou ${nComp[x]}x hoje` : ''}</small></button>`;
-  if (!pt) return `<div class="sm" style="font-weight:600">Escolha quem completa neste jogo (times de fora):</div><div class="cand">${ord([...pool]).map(btn).join('') || '<p class="sm mu">Ninguém disponível.</p>'}</div>`
-    + (sb ? `<button class="btn blk" data-a="setsub" data-id="${key}" data-s="">Tirar substituto</button>` : '');
   // Art. 9º e 11: quem completou no jogo anterior vai para o fim; menos complementações hoje vem primeiro
   const ord = arr => arr.sort((x,y) => (prev.has(x) - prev.has(y)) || ((nComp[x]||0) - (nComp[y]||0)) || (potOf(d,x) - potOf(d,y)));
-  // Art. 8º: mesmo pote ou pote inferior (número maior)
+  const tirar = sb ? `<button class="btn blk" data-a="setsub" data-id="${key}" data-s="">Tirar substituto</button>` : '';
+  if (!pt) return `<div class="sm" style="font-weight:600">Escolha quem completa neste jogo (todos que estão de fora):</div><div class="cand">${ord([...pool]).map(btn).join('') || '<p class="sm mu">Ninguém disponível.</p>'}</div>` + tirar;
+  // Art. 8º: mesmo pote ou pote inferior (número maior) aparecem primeiro; os demais de fora vêm logo abaixo, sempre visíveis
   const ok = ord(pool.filter(x => potOf(d,x) >= pt)), acima = ord(pool.filter(x => potOf(d,x) < pt));
-  return `<div class="sm" style="font-weight:600">Substituto neste jogo — pote ${pt} ou inferior, dos times de fora:</div>
-    <div class="cand">${ok.map(btn).join('') || '<p class="sm mu">Ninguém do pote ' + pt + ' ou inferior disponível nos times de fora.</p>'}</div>
-    ${acima.length ? `<details><summary class="sm mu" style="cursor:pointer">Potes superiores (fora do regulamento)</summary><div class="cand" style="margin-top:6px">${acima.map(btn).join('')}</div></details>` : ''}
-    ${sb ? `<button class="btn blk" data-a="setsub" data-id="${key}" data-s="">Tirar substituto</button>` : ''}`;
+  return `<div class="sect" style="margin-top:2px">Pelo regulamento — pote ${pt} ou inferior</div>
+    <div class="cand">${ok.map(btn).join('') || '<p class="sm mu">Ninguém do pote ' + pt + ' ou inferior está de fora.</p>'}</div>
+    ${acima.length ? `<div class="sect">Outros de fora — potes superiores</div><div class="cand">${acima.map(btn).join('')}</div>` : ''}
+    ${tirar}`;
 }
 function empateModal(d, a, b){
   const first = !d.jogos.length;
@@ -863,7 +867,7 @@ function vJogo(){
       }
       const id = it.id, pt = it.pot;
       const emp = !field && Object.keys(subs).find(k => subs[k] === id && (k[0] === 'v' || aus[k]));
-      if (!aus[id]){ const bt = `<button class="slot" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span><span>${esc(pname(id))}${field ? evb(id) : ''}${emp ? `<small>completando o ${esc(tname(keyTeam(emp)))}</small>` : ''}</span></button>`;
+      if (!aus[id]){ const bt = `<button class="slot" data-a="slot" data-id="${id}" data-t="${t}" data-dz="t${t}" data-di="${team.indexOf(id)}" data-nm="${esc(pname(id))}"><span class="pb p${pt}">${pt}</span><span>${esc(pname(id))}${field ? evb(id) : ''}${emp ? `<small>completando o ${esc(tname(keyTeam(emp)))}</small>` : ''}</span></button>`;
         return field ? `<span class="slotw">${bt}<button class="sx" data-a="saiuj" data-id="${id}" data-t="${t}" title="Saiu do jogo">✕</button></span>` : bt; }
       if (!field) return `<button class="slot aus" data-a="slot" data-id="${id}" data-t="${t}"><span class="pb p${pt}">${pt}</span>${esc(pname(id))} (ausente)</button>`;
       const sb = subs[id];
@@ -905,8 +909,9 @@ function vJogo(){
   </div></div><div class="jside">
   <div class="card">
     <h2>Próximos <span class="sp btns"><button class="btn sm" data-a="swapq">⇄ Inverter pró/ré</button><button class="btn sm" data-a="editq">Ajustar fila</button></span></h2>
+    <p class="sm mu" style="margin:-4px 0 8px">✋ Segure um nome e arraste sobre outro para trocar os dois de time.</p>
     <div class="queue">
-      <div class="qcard" style="border-color:var(--ac)"><div class="ql">Pró — entra no próximo</div><div class="qn">${esc(tname(p))}</div>${roster(p)}</div>
+      <div class="qcard" style="border-color:var(--ac)"><div class="ql">Pró</div><div class="qn">${esc(tname(p))}</div>${roster(p)}</div>
       <div class="qcard" style="border-color:var(--mu)"><div class="ql">Ré</div><div class="qn">${esc(tname(r))}</div>${roster(r)}</div>
     </div>
   </div>
@@ -1469,6 +1474,66 @@ A.fechardia = async () => {
   if (live.date === ui.date){ live = {...LIVE0(), date:ui.date}; saveLive(); keepAwake(false); }
   saveDay(ui.date); render(); window.scrollTo(0,0); toast('🔒 Dia fechado e gravado');
 };
+/* ---------- arrastar nomes para trocar de lugar (entre os 4 times do dia) ---------- */
+let drag = null, dragSupClick = 0, lastTouch = 0;
+function dzOf(el){ const s = el && el.closest && el.closest('[data-dz]'); return s ? { el:s, z:s.dataset.dz, i:+s.dataset.di } : null; }
+function dzArr(d, z){ return d.times[+z.slice(1)]; }
+function dragStart(x, y){
+  if (!drag || drag.on) return;
+  const g = document.createElement('div'); g.className = 'dghost'; g.textContent = drag.src.el.dataset.nm || ''; document.body.appendChild(g);
+  drag.on = true; drag.g = g; drag.src.el.classList.add('dsrc'); dragMove(x, y);
+  try { navigator.vibrate && navigator.vibrate(30); } catch(e){}
+}
+function dragMove(x, y){
+  if (!drag || !drag.on) return;
+  drag.g.style.left = x + 'px'; drag.g.style.top = y + 'px';
+  if (y > innerHeight - 90) scrollBy(0, 14); else if (y < 90) scrollBy(0, -14);   // rola a tela perto das bordas
+  drag.g.style.display = 'none'; const t = dzOf(document.elementFromPoint(x, y)); drag.g.style.display = '';
+  document.querySelectorAll('.dtgt').forEach(e => e.classList.remove('dtgt'));
+  drag.tgt = (t && t.el !== drag.src.el) ? t : null; if (drag.tgt) drag.tgt.el.classList.add('dtgt');
+}
+function dragEnd(){
+  if (!drag) return; clearTimeout(drag.tm);
+  const dd = drag; drag = null;
+  if (!dd.on) return;
+  dd.g.remove(); document.querySelectorAll('.dtgt,.dsrc').forEach(e => e.classList.remove('dtgt','dsrc'));
+  dragSupClick = Date.now();
+  if (dd.tgt) trocarPos(dd.src, dd.tgt);
+}
+function trocarPos(a, b){
+  const d = S.days[ui.date]; if (!d || !d.times) return;
+  if (dayLocked()){ toast('🔒 Dia fechado — não pode mais ser alterado'); return; }
+  const A1 = dzArr(d, a.z), id = A1[a.i]; if (!id) return;
+  const B1 = dzArr(d, b.z), id2 = B1[b.i]; if (!id2) return;
+  A1[a.i] = id2; B1[b.i] = id;
+  saveDay(ui.date); render(); toast(`${pname(id)} ⇄ ${pname(id2)}`);
+}
+document.addEventListener('touchstart', e => {
+  lastTouch = Date.now();
+  const t = dzOf(e.target); if (!t || t.z[0] === 'v' || ui.tab !== 'jogo' || e.touches.length > 1) return;
+  const p = e.touches[0];
+  drag = { src:t, x0:p.clientX, y0:p.clientY, on:false };
+  drag.tm = setTimeout(() => { if (drag && !drag.on) dragStart(drag.x0, drag.y0); }, 280);
+}, { passive:true });
+document.addEventListener('touchmove', e => {
+  if (!drag) return; const p = e.touches[0];
+  if (!drag.on){ if (Math.hypot(p.clientX - drag.x0, p.clientY - drag.y0) > 10){ clearTimeout(drag.tm); drag = null; } return; }
+  e.preventDefault(); dragMove(p.clientX, p.clientY);
+}, { passive:false });
+document.addEventListener('touchend', dragEnd); document.addEventListener('touchcancel', dragEnd);
+document.addEventListener('mousedown', e => {
+  if (Date.now() - lastTouch < 800 || e.button !== 0) return;
+  const t = dzOf(e.target); if (!t || t.z[0] === 'v' || ui.tab !== 'jogo') return;
+  drag = { src:t, x0:e.clientX, y0:e.clientY, on:false };
+});
+document.addEventListener('mousemove', e => {
+  if (!drag || Date.now() - lastTouch < 800) return;
+  if (!drag.on){ if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6) dragStart(e.clientX, e.clientY); return; }
+  dragMove(e.clientX, e.clientY);
+});
+document.addEventListener('mouseup', () => { if (Date.now() - lastTouch >= 800) dragEnd(); });
+document.addEventListener('contextmenu', e => { if (drag || dzOf(e.target)) e.preventDefault(); });
+document.addEventListener('click', e => { if (Date.now() - dragSupClick < 400){ e.preventDefault(); e.stopPropagation(); return; } }, true);
 document.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; const f = A[b.dataset.a]; if (f){ e.preventDefault(); if (LOCK.has(b.dataset.a) && dayLocked()){ toast('🔒 Dia fechado — não pode mais ser alterado'); return; } f(b.dataset, b); } });
 document.addEventListener('input', e => {
   if (e.target.id === 'filtroCad'){ ui.filtroCad = e.target.value; applyFiltro(); return; }
