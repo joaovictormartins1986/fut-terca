@@ -367,6 +367,9 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
 .opl .ock{font-weight:900;font-size:18px}
 .opl.ok{background:#1f6b45;border:1.5px solid #2ea36a;color:#eafff3}
 .opl.vg{opacity:.5;font-style:italic}
+.opl .oseq{display:flex;flex-direction:column;align-items:flex-end;font-family:"Barlow Condensed";font-weight:800;font-size:18px;line-height:1}
+.opl .oseq small{font-family:Inter;font-weight:600;font-size:10.5px;opacity:.85}
+.opl.ok.tard{background:#6b4a12;border-color:#b07a1d;color:#ffe9c2}
 </style>
 </head>
 <body>
@@ -410,7 +413,7 @@ function defaultDate(){
 // coletes: lado esquerdo do painel = amarelo, lado direito = azul
 const COLETE = [ {n:'Amarelo', c:'#facc15', t:'#1d1a05'}, {n:'Azul', c:'#3b82f6', t:'#ffffff'} ];
 const TEAMC = '#2c4339';
-const DEF = { valorHora:180, horas:2, valorJogador:25, valorMensal:100, minutos:8, gols:3 };
+const DEF = { valorHora:180, horas:2, valorJogador:25, valorMensal:100, minutos:8, gols:3, inicio:'19:00' };
 
 /* ================= estado ================= */
 const S = { config:{...DEF}, players:{}, days:{}, ledger:{}, meses:{} };
@@ -888,10 +891,16 @@ function slotModal(d, id, t){
 }
 
 // pré-jogo: toca em quem chegou; os times se ordenam sozinhos (Art. 17: menos ausentes primeiro)
+// horário de início do dia (ex.: 19:00) em milissegundos
+function inicioTs(d){ const [h,m] = String(S.config.inicio || '19:00').split(':').map(Number); const x = parseD(d.data); x.setHours(h||19, m||0, 0, 0); return x.getTime(); }
+// ordem de chegada: lista dos ids na ordem em que foram marcados
+const ordemCheg = d => Object.entries(d.cheg || {}).filter(([id]) => d.times.some(tt => tt.includes(id))).sort((a,b) => a[1] - b[1]).map(([id]) => id);
 function ordemAuto(d){
-  const ch = d.cheg || {};
-  const falta = t => (d.times[t]||[]).filter(id => !ch[id]).length + vagasOf(d,t).length;
-  const quando = t => { const ts = (d.times[t]||[]).filter(id => ch[id]).map(id => ch[id]); return ts.length ? Math.max(...ts) : Infinity; };
+  const ch = d.cheg || {}, lim = inicioTs(d);
+  const ok = id => ch[id] && ch[id] <= lim;                       // conta só quem chegou até o horário de início
+  const falta = t => (d.times[t]||[]).filter(id => !ok(id)).length + vagasOf(d,t).length;
+  // desempate: quem atingiu esse número de jogadores primeiro
+  const quando = t => { const ts = (d.times[t]||[]).filter(ok).map(id => ch[id]); return ts.length ? Math.max(...ts) : Infinity; };
   const o = [0,1,2,3].sort((x,y) => (falta(x) - falta(y)) || (quando(x) - quando(y)) || (x - y));
   // inversões manuais entre times empatados (par ou ímpar)
   const inv = d.ordInv || {};
@@ -900,7 +909,8 @@ function ordemAuto(d){
   return { o, falta };
 }
 function vOrdem(d){
-  const ch = d.cheg || {}, { o, falta } = ordemAuto(d);
+  const ch = d.cheg || {}, { o, falta } = ordemAuto(d), seq = ordemCheg(d), lim = inicioTs(d);
+  const hm = ts => { const x = new Date(ts); return pad(x.getHours()) + ':' + pad(x.getMinutes()); };
   const ROLE = ['1º · Joga — amarelo','2º · Joga — azul','3º · Pró','4º · Ré'];
   const RC = [COLETE[0].c, COLETE[1].c, 'var(--ac)', 'var(--mu)'];
   const nCheg = Object.keys(ch).filter(id => d.times.some(tt => tt.includes(id))).length;
@@ -908,15 +918,16 @@ function vOrdem(d){
     const tie = (k < 3 && falta(o[k+1]) === falta(t)) ? o[k+1] : null;
     return `<div class="ocard" style="border-color:${RC[k]}">
       <div class="oh"><span class="orole" style="background:${RC[k]};color:${k===0?COLETE[0].t:k===1?COLETE[1].t:'#06140d'}">${ROLE[k]}</span>
-        <span class="cnt ${falta(t)?'':'pos'}">${team.filter(id => ch[id]).length}/${team.length + vagasOf(d,t).length}</span></div>
+        <span class="cnt ${falta(t)?'':'pos'}">${team.filter(id => ch[id] && ch[id] <= lim).length}/${team.length + vagasOf(d,t).length}</span></div>
       <div class="otn">${esc(tname(t))}</div>
-      <div class="opls">${team.map(id => `<button class="opl ${ch[id]?'ok':''}" data-a="cheg" data-id="${id}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span><span class="onm">${esc(pname(id))}</span><span class="ock">${ch[id]?'✓':''}</span></button>`).join('')}
+      <div class="opls">${team.map(id => { const n = seq.indexOf(id) + 1, tard = ch[id] && ch[id] > lim;
+        return `<button class="opl ${ch[id]?'ok':''} ${tard?'tard':''}" data-a="cheg" data-id="${id}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span><span class="onm">${esc(pname(id))}</span>${ch[id] ? `<span class="oseq">${n}º<small>${hm(ch[id])}</small></span>` : ''}</button>`; }).join('')}
         ${vagasOf(d,t).map(v => `<div class="opl vg"><span class="pb ${v.pot?'p'+v.pot:''}">${v.pot||'?'}</span><span class="onm">Vaga${v.pot ? ' — pote ' + v.pot : ''}</span></div>`).join('')}</div>
       ${tie !== null ? `<button class="btn sm blk" style="margin-top:8px" data-a="ordinv" data-a1="${t}" data-a2="${tie}">⇄ Par ou ímpar com ${esc(tname(tie))}</button>` : ''}
     </div>`; };
   return `<div class="card">
     <h2>Pré-jogo <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${nCheg} chegaram</span></h2>
-    <p class="sm mu" style="margin-bottom:10px">Toque em quem chegou. Os times se ordenam sozinhos: <b>menos ausentes joga primeiro</b> (Art. 17); empatados, quem completou antes — ou use o par ou ímpar.</p>
+    <p class="sm mu" style="margin-bottom:10px">Toque em quem chegou, na ordem de chegada — cada um recebe o número e o horário. Os times se ordenam sozinhos: <b>mais jogadores presentes até as ${esc(S.config.inicio || '19:00')}</b> entra primeiro (Art. 17); empatados, <b>quem completou esse número antes</b> — ou use o par ou ímpar. Quem chega depois das ${esc(S.config.inicio || '19:00')} aparece em laranja e não conta para a ordem.</p>
     <div class="ogrid">${[0,1,2,3].map(card).join('')}</div>
     <div class="sm" style="margin-top:10px;text-align:center"><b>Ordem de entrada:</b> ${o.map((t,k) => `<span style="color:${RC[k]};font-weight:800">${k+1}º ${esc(tname(t))}</span>`).join(' → ')}</div>
     <div class="btns" style="margin-top:12px"><button class="btn" data-a="chegclr">Limpar</button><button class="btn pri" style="flex:1" data-a="ordemok2">Confirmar ordem e ir para o jogo →</button></div>
@@ -1161,7 +1172,22 @@ function monthData(m){
   const pago = Object.values(rows).reduce((s,r) => s + r.pago, 0);
   const jogos = days.reduce((s,d) => s + (d.jogos||[]).length, 0);
   const fs = days.map(fechamento); const pix = fs.reduce((s,f) => s + f.pix, 0), balcao = fs.reduce((s,f) => s + f.balcao, 0), pixDono = fs.reduce((s,f) => s + f.pixDono, 0);
-  return { days, rows, w, gs, ent, sai, quadra, devido, pago, jogos, led, pix, balcao, pixDono, mensal };
+  // chegadas depois do horário de início (registradas no pré-jogo)
+  const atrasos = [];
+  for (const d of days){ const lim = inicioTs(d);
+    for (const [id, ts] of Object.entries(d.cheg || {})) if (ts > lim){ atrasos.push({ id, data:d.data, ts, min:Math.round((ts - lim) / 60000) }); (rows[id] ||= {pres:0, devido:0, pago:0}).atr = ((rows[id].atr)||0) + 1; } }
+  atrasos.sort((a,b) => a.data < b.data ? -1 : a.data > b.data ? 1 : a.ts - b.ts);
+  return { days, rows, w, gs, ent, sai, quadra, devido, pago, jogos, led, pix, balcao, pixDono, mensal, atrasos };
+}
+function atrasosText(m){
+  const x = monthData(m), hm = ts => { const z = new Date(ts); return pad(z.getHours()) + ':' + pad(z.getMinutes()); };
+  let t = `⏰ *FUT TERÇA — chegadas depois das ${S.config.inicio || '19:00'} — ${fmonth(m)}*\n`;
+  if (!x.atrasos.length) return t + '\nNinguém chegou atrasado. 👏';
+  const porDia = {}; x.atrasos.forEach(a => (porDia[a.data] ||= []).push(a));
+  for (const [dt, l] of Object.entries(porDia)) t += `\n*${fdate(dt)}*\n` + l.map(a => `• ${pname(a.id)} — ${hm(a.ts)} (+${a.min} min)`).join('\n') + '\n';
+  const tot = {}; x.atrasos.forEach(a => tot[a.id] = (tot[a.id]||0) + 1);
+  t += `\n*Total no mês*\n` + Object.entries(tot).sort((a,b) => b[1] - a[1]).map(([id,n]) => `${pname(id)} — ${n}x`).join('\n');
+  return t;
 }
 function vRel(){
   const m = ui.mes, x = monthData(m);
@@ -1188,9 +1214,16 @@ function vRel(){
   </div>
   <div class="card">
     <h2>Por jogador</h2>
-    ${rows.length ? `<div class="tbl"><table><tr><th>Jogador</th><th class="r">Pres.</th><th class="r">Vitórias</th><th class="r">Gols</th><th class="r">Assist.</th><th class="r">Devido</th><th class="r">Pago</th><th class="r">Aberto</th></tr>
-      ${rows.map(([id,r]) => { const ab = r.devido - r.pago; return `<tr><td>${esc(pname(id))}</td><td class="r">${r.pres}/${x.days.length}</td><td class="r">${x.w[id]||0}</td><td class="r">${x.gs.g[id]||0}</td><td class="r">${x.gs.a[id]||0}</td><td class="r">${brl(r.devido)}</td><td class="r">${brl(r.pago)}</td><td class="r ${ab>0.009?'neg':''}">${ab>0.009?brl(ab):'—'}</td></tr>`; }).join('')}
+    ${rows.length ? `<div class="tbl"><table><tr><th>Jogador</th><th class="r">Pres.</th><th class="r">Após ${esc(S.config.inicio || '19:00')}</th><th class="r">Vitórias</th><th class="r">Gols</th><th class="r">Assist.</th><th class="r">Devido</th><th class="r">Pago</th><th class="r">Aberto</th></tr>
+      ${rows.map(([id,r]) => { const ab = r.devido - r.pago; return `<tr><td>${esc(pname(id))}</td><td class="r">${r.pres}/${x.days.length}</td><td class="r ${r.atr?'neg':''}">${r.atr || '—'}</td><td class="r">${x.w[id]||0}</td><td class="r">${x.gs.g[id]||0}</td><td class="r">${x.gs.a[id]||0}</td><td class="r">${brl(r.devido)}</td><td class="r">${brl(r.pago)}</td><td class="r ${ab>0.009?'neg':''}">${ab>0.009?brl(ab):'—'}</td></tr>`; }).join('')}
     </table></div>` : '<p class="mu">Sem jogos neste mês.</p>'}
+  </div>
+  <div class="card">
+    <h2>Chegadas depois das ${esc(S.config.inicio || '19:00')} <span class="sp btns">${x.atrasos.length ? '<button class="btn sm" data-a="copyatr">Copiar</button>' : ''}</span></h2>
+    ${x.atrasos.length ? `<div class="tbl"><table><tr><th>Dia</th><th>Jogador</th><th class="r">Chegou</th><th class="r">Atraso</th></tr>
+      ${x.atrasos.map(a => { const z = new Date(a.ts); return `<tr><td>${esc(fdate(a.data))}</td><td>${esc(pname(a.id))}</td><td class="r">${pad(z.getHours())}:${pad(z.getMinutes())}</td><td class="r neg">+${a.min} min</td></tr>`; }).join('')}
+    </table></div>` : `<p class="mu">Nenhuma chegada depois das ${esc(S.config.inicio || '19:00')} registrada neste mês.</p>`}
+    <p class="sm mu" style="margin-top:6px">Vem das chegadas marcadas no pré-jogo (aba Jogo).</p>
   </div>`;
 }
 function relText(m){
@@ -1201,6 +1234,8 @@ function relText(m){
   const art = Object.entries(x.gs.g).sort((a,b) => b[1]-a[1]).slice(0,5), asi = Object.entries(x.gs.a).sort((a,b) => b[1]-a[1]).slice(0,5);
   if (art.length) t += `⚽ *Artilharia*\n${art.map(([id,n],i) => `${i+1}. ${pname(id)} — ${n}`).join('\n')}\n\n`;
   if (asi.length) t += `🅰️ *Assistências*\n${asi.map(([id,n],i) => `${i+1}. ${pname(id)} — ${n}`).join('\n')}\n\n`;
+  if (x.atrasos.length){ const tot = {}; x.atrasos.forEach(a => tot[a.id] = (tot[a.id]||0) + 1);
+    t += `⏰ *Chegaram depois das ${S.config.inicio || '19:00'}*\n${Object.entries(tot).sort((a,b) => b[1]-a[1]).map(([id,n]) => `${pname(id)} — ${n}x`).join('\n')}\n\n`; }
   t += `*Presença*\n`;
   rows.forEach(([id,r]) => { const ab = r.devido - r.pago; t += `${pname(id)} — ${r.pres}/${x.days.length}${ab>0.009 ? ` (deve ${brl(ab)})` : ''}\n`; });
   return t;
@@ -1238,6 +1273,7 @@ function vCad(){
       <label class="f">Mensalidade padrão (R$)<input type="number" step="0.01" id="cfMen" value="${c.valorMensal ?? 100}"></label>
       <label class="f">Minutos por jogo<input type="number" id="cfM" value="${c.minutos}"></label>
       <label class="f">Gols para encerrar<input type="number" id="cfG" value="${c.gols}"></label>
+      <label class="f">Horário de início (pré-jogo)<input type="time" id="cfI" value="${c.inicio || '19:00'}"></label>
     </div>
     <button class="btn pri" style="margin-top:10px" data-a="savecfg">Salvar ajustes</button>
   </div>
@@ -1488,6 +1524,7 @@ const A = {
     if (out.length) t += `\n*Sem time:* ${out.map(pname).join(', ')}\n`;
     if (gols.length) t += `\n🧤 *Goleiros:* ${gols.map(pname).join(', ')}\n`;
     copyText(t.trim()); },
+  copyatr: () => copyText(atrasosText(ui.mes)),
   copyrel: () => copyText(relText(ui.mes)),
 
   addmode: x => { ui.addMode = x.m; render(); setTimeout(() => (x.m === 'lote' ? $('#bulk') : $('#newName'))?.focus(), 30); },
@@ -1519,7 +1556,7 @@ const A = {
   },
   savecfg: () => {
     const num = (id, def) => { const v = parseFloat(String($(id).value).replace(',', '.')); return isFinite(v) && v >= 0 ? v : def; };
-    S.config = { ...S.config, valorHora:num('#cfH',180), horas:num('#cfHs',2), valorJogador:num('#cfV',25), valorMensal:num('#cfMen',100), minutos:Math.max(1,num('#cfM',8)), gols:Math.max(1,num('#cfG',3)) };
+    S.config = { ...S.config, valorHora:num('#cfH',180), horas:num('#cfHs',2), valorJogador:num('#cfV',25), valorMensal:num('#cfMen',100), minutos:Math.max(1,num('#cfM',8)), gols:Math.max(1,num('#cfG',3)), inicio:($('#cfI') && $('#cfI').value) || '19:00' };
     save('fut/config', S.config); toast('Ajustes salvos'); render();
   },
   backup: () => copyText(JSON.stringify({ v:1, config:S.config, players:S.players, days:S.days, ledger:S.ledger, meses:S.meses })),
