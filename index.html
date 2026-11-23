@@ -303,6 +303,70 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--
 .dsrc{opacity:.35}
 .dtgt{outline:3px solid var(--ac)!important;outline-offset:2px}
 [data-dz]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* placar no meio, − à esquerda e + à direita */
+.side{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;justify-items:center;column-gap:12px}
+.side>*{grid-column:1/-1}
+.side .gb{display:contents}
+.side .gb button:first-child{grid-column:1;grid-row:var(--gr,3);justify-self:end}
+.side .gl{grid-column:2;grid-row:var(--gr,3)}
+.side .gb button.plus{grid-column:3;grid-row:var(--gr,3);justify-self:start}
+.side .roster{grid-row:calc(var(--gr,3) + 1)}
+.side .gb button,.side .gb button.plus{width:52px}
+.side{--gr:3}
+@media (max-width:620px){
+  .board.vsb{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .side{column-gap:6px;min-width:0;padding:10px 6px}
+  .side .gb button,.side .gb button.plus{width:40px;height:42px;font-size:20px}
+  .side .gl{font-size:56px}
+  .side .tn{font-size:20px;white-space:normal;text-align:center;line-height:1.05}
+  .side .roster{width:100%;min-width:0}
+}
+/* tablet deitado (iPad): tela do jogo inteira sem rolar */
+@media (orientation:landscape) and (min-width:900px) and (min-height:560px) and (max-height:1000px){
+  main#view.wide{max-width:none;padding:8px 10px 0!important;margin-bottom:0}
+  body:has(#view.wide){overflow:hidden}
+  .jgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:10px;align-items:stretch;height:calc(100dvh - 57px - 60px - 34px - env(safe-area-inset-bottom))}
+  .jmain,.jside{overflow:auto;min-height:0;overscroll-behavior:contain}
+  .jmain .card{padding:8px 10px;margin-bottom:0}
+  .jmain .card>h2{display:flex;font-size:15px;margin:0 0 6px}
+  .clockbox{flex-direction:row;flex-wrap:nowrap;padding:2px 14px;gap:18px;margin-bottom:8px;border-radius:16px}
+  .clockbox .clock{font-size:clamp(88px,15vh,124px);line-height:1}
+  .clockbox .ctrl{flex-direction:row;gap:10px}
+  .clockbox .ctrl .btn{padding:16px 20px;font-size:20px;min-width:0;width:auto}
+  .clockbox .cmsg{display:none}
+  .clockbox{justify-content:center}
+  .board.vsb{gap:8px}
+  .vs{font-size:44px}
+  .side{padding:8px 10px;row-gap:2px;column-gap:14px}
+  .side .tn{font-size:clamp(22px,2.4vw,28px);line-height:1.05;white-space:nowrap}
+  .side>div.sm{margin:0!important}
+  .side .gl{font-size:clamp(56px,10vh,80px);line-height:.9}
+  .side .gb button,.side .gb button.plus{height:56px;width:60px}
+  .side .roster{margin-top:6px;gap:4px}
+  .side .roster .slot{min-height:clamp(38px,6vh,50px);padding:5px 10px;font-size:16px}
+  .side .roster .sx{width:36px}
+  .resdone{padding:6px 12px;margin-top:8px!important}
+  .resdone .rt{font-size:26px}
+  .resdone .btn.nxt{font-size:26px;padding:6px 18px}
+  .rulehint{display:none}
+  .evlist{margin-top:6px}
+  .jside .card{padding:10px 12px;margin-bottom:8px}
+  .jside .qlist .slot{min-height:34px;padding:4px 8px}
+}
+.ogrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:900px){ .ogrid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.ocard{border-radius:14px;padding:10px;background:var(--s2);border:2px solid var(--line);display:flex;flex-direction:column}
+.ocard .oh{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ocard .orole{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.ocard .cnt{font-family:"Barlow Condensed";font-weight:800;font-size:20px;color:var(--warn)}
+.ocard .cnt.pos{color:var(--ac)}
+.ocard .otn{font-family:"Barlow Condensed";font-weight:800;font-size:26px;text-transform:uppercase;margin:4px 0 6px}
+.ocard .opls{display:flex;flex-direction:column;gap:6px}
+.opl{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:6px 10px;border-radius:10px;background:transparent;border:1.5px dashed var(--line);color:var(--mu);text-align:left;font-weight:600;font-size:15px}
+.opl .onm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opl .ock{font-weight:900;font-size:18px}
+.opl.ok{background:#1f6b45;border:1.5px solid #2ea36a;color:#eafff3}
+.opl.vg{opacity:.5;font-style:italic}
 </style>
 </head>
 <body>
@@ -823,23 +887,40 @@ function slotModal(d, id, t){
   modal(h);
 }
 
+// pré-jogo: toca em quem chegou; os times se ordenam sozinhos (Art. 17: menos ausentes primeiro)
+function ordemAuto(d){
+  const ch = d.cheg || {};
+  const falta = t => (d.times[t]||[]).filter(id => !ch[id]).length + vagasOf(d,t).length;
+  const quando = t => { const ts = (d.times[t]||[]).filter(id => ch[id]).map(id => ch[id]); return ts.length ? Math.max(...ts) : Infinity; };
+  const o = [0,1,2,3].sort((x,y) => (falta(x) - falta(y)) || (quando(x) - quando(y)) || (x - y));
+  // inversões manuais entre times empatados (par ou ímpar)
+  const inv = d.ordInv || {};
+  for (let i = 0; i < 3; i++){ const x = o[i], y = o[i+1];
+    if (falta(x) === falta(y) && inv[Math.min(x,y) + '-' + Math.max(x,y)]){ o[i] = y; o[i+1] = x; i++; } }
+  return { o, falta };
+}
 function vOrdem(d){
-  const o = ui.ordem || [];
-  const ROLE = ['Joga — colete amarelo','Joga — colete azul','Pró','Ré'];
-  const roster = t => (d.times[t]||[]).map(id => (d.aus||{})[id] ? `<s>${esc(pname(id))}</s>` : esc(pname(id))).join(' · ');
-  const nAus = t => (d.times[t]||[]).filter(id => (d.aus||{})[id]).length + vagasOf(d,t).length;
+  const ch = d.cheg || {}, { o, falta } = ordemAuto(d);
+  const ROLE = ['1º · Joga — amarelo','2º · Joga — azul','3º · Pró','4º · Ré'];
+  const RC = [COLETE[0].c, COLETE[1].c, 'var(--ac)', 'var(--mu)'];
+  const nCheg = Object.keys(ch).filter(id => d.times.some(tt => tt.includes(id))).length;
+  const card = t => { const k = o.indexOf(t), team = (d.times[t]||[]).slice().sort((x,y) => potOf(d,x) - potOf(d,y));
+    const tie = (k < 3 && falta(o[k+1]) === falta(t)) ? o[k+1] : null;
+    return `<div class="ocard" style="border-color:${RC[k]}">
+      <div class="oh"><span class="orole" style="background:${RC[k]};color:${k===0?COLETE[0].t:k===1?COLETE[1].t:'#06140d'}">${ROLE[k]}</span>
+        <span class="cnt ${falta(t)?'':'pos'}">${team.filter(id => ch[id]).length}/${team.length + vagasOf(d,t).length}</span></div>
+      <div class="otn">${esc(tname(t))}</div>
+      <div class="opls">${team.map(id => `<button class="opl ${ch[id]?'ok':''}" data-a="cheg" data-id="${id}"><span class="pb p${potOf(d,id)}">${potOf(d,id)}</span><span class="onm">${esc(pname(id))}</span><span class="ock">${ch[id]?'✓':''}</span></button>`).join('')}
+        ${vagasOf(d,t).map(v => `<div class="opl vg"><span class="pb ${v.pot?'p'+v.pot:''}">${v.pot||'?'}</span><span class="onm">Vaga${v.pot ? ' — pote ' + v.pot : ''}</span></div>`).join('')}</div>
+      ${tie !== null ? `<button class="btn sm blk" style="margin-top:8px" data-a="ordinv" data-a1="${t}" data-a2="${tie}">⇄ Par ou ímpar com ${esc(tname(tie))}</button>` : ''}
+    </div>`; };
   return `<div class="card">
-    <h2>Primeiro jogo do dia</h2>
-    <p class="mu sm" style="margin-bottom:8px">Toque nos times na ordem de entrada: os dois primeiros começam jogando, o 3º é o pró e o 4º é o ré. Pelo regulamento (Art. 17), <b>times com menos ausentes têm prioridade</b>; empate em ausentes, par ou ímpar.</p>
-    <div class="btns" style="margin-bottom:12px"><button class="btn sm" data-a="ordemaus">Ordenar por ausentes</button><button class="btn sm" data-a="ordemmarcar">Marcar quem não chegou</button></div>
-    <div class="plist">${[0,1,2,3].map(t => { const k = o.indexOf(t);
-      return `<button class="prow" style="text-align:left;${k>=0?'outline:2px solid var(--ac)':''}" data-a="ordem" data-t="${t}">
-        <span class="chk" style="${k>=0?'':'background:transparent;border-color:var(--line);color:var(--mu)'}">${k>=0 ? (k+1)+'º' : ''}</span>
-        <span style="flex:1;min-width:0"><b class="cond" style="font-size:20px;text-transform:uppercase">${esc(tname(t))}</b>
-        ${k>=0 ? `<span class="sm" style="margin-left:6px;color:${k===0?COLETE[0].c:k===1?'#7fb0ff':'var(--ac)'}">${ROLE[k]}</span>` : ''}
-        <span class="sm" style="margin-left:6px;color:${nAus(t)?'var(--warn)':'var(--mu)'}">${nAus(t) ? nAus(t) + ' ausente' + (nAus(t)>1?'s':'') : 'completo'}</span>
-        <span class="sm mu" style="display:block;white-space:normal">${roster(t)}</span></span></button>`; }).join('')}</div>
-    <div class="btns" style="margin-top:12px"><button class="btn" data-a="ordemclr">Limpar</button><button class="btn pri" style="flex:1" data-a="ordemok" ${o.length>=3?'':'disabled'}>Confirmar e ir para o jogo</button></div>
+    <h2>Pré-jogo <span class="sp sm mu" style="font-family:Inter;text-transform:none;font-weight:500">${nCheg} chegaram</span></h2>
+    <p class="sm mu" style="margin-bottom:10px">Toque em quem chegou. Os times se ordenam sozinhos: <b>menos ausentes joga primeiro</b> (Art. 17); empatados, quem completou antes — ou use o par ou ímpar.</p>
+    <div class="ogrid">${[0,1,2,3].map(card).join('')}</div>
+    <div class="sm" style="margin-top:10px;text-align:center"><b>Ordem de entrada:</b> ${o.map((t,k) => `<span style="color:${RC[k]};font-weight:800">${k+1}º ${esc(tname(t))}</span>`).join(' → ')}</div>
+    <div class="btns" style="margin-top:12px"><button class="btn" data-a="chegclr">Limpar</button><button class="btn pri" style="flex:1" data-a="ordemok2">Confirmar ordem e ir para o jogo →</button></div>
+    <p class="sm mu" style="margin-top:6px">Ao confirmar, quem não foi marcado fica como <b>ausente</b> e pode ser completado no jogo. Se chegar depois, toque no nome dele no jogo e em "chegou".</p>
   </div>`;
 }
 
@@ -1348,6 +1429,15 @@ const A = {
     [0,1,2,3].forEach(t => { if (!o.includes(t)) o.push(t); });
     const d = S.days[ui.date]; d.fila = o; d.filaOk = true; d.entrou = null; d.streak = null; ui.ordem = [];
     saveDay(ui.date); render(); window.scrollTo(0,0); },
+  cheg: x => { const d = S.days[ui.date]; d.cheg ||= {}; if (d.cheg[x.id]) delete d.cheg[x.id]; else d.cheg[x.id] = Date.now(); saveDay(ui.date); render(); },
+  chegclr: async () => { if (!(await ask('Desmarcar todos que chegaram?', 'Limpar', true))) return; const d = S.days[ui.date]; d.cheg = {}; d.ordInv = {}; saveDay(ui.date); render(); },
+  ordinv: x => { const d = S.days[ui.date], k = Math.min(+x.a1, +x.a2) + '-' + Math.max(+x.a1, +x.a2); d.ordInv ||= {}; if (d.ordInv[k]) delete d.ordInv[k]; else d.ordInv[k] = true; saveDay(ui.date); render(); },
+  ordemok2: async () => { const d = S.days[ui.date], ch = d.cheg || {}, { o } = ordemAuto(d);
+    const faltam = d.times.flat().filter(id => !ch[id]);
+    if (faltam.length && !(await ask(`${faltam.length} jogador${faltam.length>1?'es':''} ainda não ${faltam.length>1?'foram marcados':'foi marcado'} e ${faltam.length>1?'ficarão':'ficará'} como ausente${faltam.length>1?'s':''}:<br><span class="sm mu">${faltam.map(pname).join(', ')}</span><br><br>Confirmar a ordem: <b>${o.map(t => tname(t)).join(' → ')}</b>?`, 'Confirmar'))) return;
+    d.aus ||= {}; d.times.flat().forEach(id => { if (ch[id]) delete d.aus[id]; else d.aus[id] = true; });
+    d.fila = o; d.filaOk = true; d.entrou = null; d.streak = null; ui.ordem = [];
+    saveDay(ui.date); render(); window.scrollTo(0,0); },
   slot: x => slotModal(S.days[ui.date], x.id, +x.t),
   vaga: x => vagaModal(S.days[ui.date], x.k, +x.t, x.p ? +x.p : null),
   setaus: x => { const d = S.days[ui.date]; (d.aus ||= {})[x.id] = true; saveDay(ui.date); render();
@@ -1450,7 +1540,7 @@ const C = {
   mes: el => { if (el.value){ ui.mes = el.value; render(); } }
 };
 /* ---------- fechamento do dia: depois de fechado, o dia não pode mais ser alterado ---------- */
-const LOCK = new Set('solo allpres pres pot resetpotes revisado semjogo pay unpay donopago quickadd draw cleartimes swap pickout putin clock reset gol gedit gsc gas pickres encerrar res undo swapq editq ordem ordemclr ordemaus ordemmarcar toggleaus ordemok slot vaga setaus unaus saiuj subsaiu setsub saveq dayval daycost'.split(' '));
+const LOCK = new Set('cheg chegclr ordinv ordemok2 solo allpres pres pot resetpotes revisado semjogo pay unpay donopago quickadd draw cleartimes swap pickout putin clock reset gol gedit gsc gas pickres encerrar res undo swapq editq ordem ordemclr ordemaus ordemmarcar toggleaus ordemok slot vaga setaus unaus saiuj subsaiu setsub saveq dayval daycost'.split(' '));
 const dayLocked = (date = ui.date) => !!(S.days[date] && S.days[date].fechado);
 function lockBanner(){
   if (!dayLocked() || !['dia','sorteio','jogo','caixa'].includes(ui.tab)) return '';
